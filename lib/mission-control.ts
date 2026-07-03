@@ -82,6 +82,7 @@ export function computeMissionControlState(
       reasoning:
         "This is the first thing a real prospect checks to know you're real.",
       actionLabel: "Build My Website",
+      actionHref: "/website",
     };
   }
 
@@ -90,6 +91,10 @@ export function computeMissionControlState(
       sentence: "Let's get you live.",
       reasoning: "Your site is ready — going live is what makes you findable.",
       actionLabel: "Go Live",
+      // Same destination as the previous state — publishing happens inside
+      // the Website Builder screen itself (08_SCREEN_SPECIFICATIONS.md §5's
+      // preflight-folded-in decision), not a separate screen.
+      actionHref: "/website",
     };
   }
 

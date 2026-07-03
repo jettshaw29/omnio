@@ -7,8 +7,10 @@ import Link from "next/link";
  */
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "text";
-  // When a state's flow isn't built yet, no href is passed and the button
-  // renders disabled rather than doing nothing on click.
+  // Renders as a real link when provided. Callers that need "no destination
+  // yet" to mean disabled (e.g. MissionControlCard) pass disabled explicitly
+  // — Button itself has no opinion on that, or every plain onClick button
+  // with no href would silently render disabled.
   href?: string;
 };
 
@@ -36,10 +38,6 @@ export function Button({
   }
 
   return (
-    <button
-      disabled={disabled ?? !href}
-      className={`${base} ${styles} ${className}`}
-      {...props}
-    />
+    <button disabled={disabled} className={`${base} ${styles} ${className}`} {...props} />
   );
 }
