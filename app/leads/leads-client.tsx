@@ -123,6 +123,11 @@ export function LeadsClient({
                     >
                       {draftingId === lead.id ? "Thinking..." : "Draft Outreach"}
                     </Button>
+                    {lead.status !== "closed" && (
+                      <Button variant="text" href={`/close/${lead.id}`}>
+                        Close Client
+                      </Button>
+                    )}
                   </div>
                 </div>
 

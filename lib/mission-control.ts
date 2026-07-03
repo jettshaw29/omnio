@@ -126,6 +126,7 @@ export function computeMissionControlState(
       sentence: "Prep for your call.",
       reasoning: "A booked call is real demand — let's make sure you close it.",
       actionLabel: "Prep For Call",
+      actionHref: "/leads",
     };
   }
 

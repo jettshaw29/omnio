@@ -36,7 +36,7 @@ function mockOfferProposal(niche: string): OfferProposal {
   if (n.includes("voice receptionist") || n.includes("home service")) {
     return {
       service: "AI Missed-Call Recovery System",
-      priceCents: 150000,
+      priceCents: 200000,
       reasoning:
         "A one-time setup fee with a 50% deposit means signing alone crosses your $1,000 milestone.",
     };
@@ -44,7 +44,7 @@ function mockOfferProposal(niche: string): OfferProposal {
   if (n.includes("real estate") || n.includes("lead-qualification") || n.includes("lead qualification")) {
     return {
       service: "AI Lead Qualification Chatbot",
-      priceCents: 180000,
+      priceCents: 220000,
       reasoning:
         "Agents already budget for lead tools, and this price supports a deposit that alone clears $1,000.",
     };
@@ -52,14 +52,14 @@ function mockOfferProposal(niche: string): OfferProposal {
   if (n.includes("content repurposing") || n.includes("coach")) {
     return {
       service: "AI Content Repurposing Package",
-      priceCents: 120000,
+      priceCents: 200000,
       reasoning:
-        "Priced so a 50% deposit on signing gets you most of the way to your first $1,000 immediately.",
+        "A one-time setup fee with a 50% deposit means signing alone crosses your $1,000 milestone.",
     };
   }
   return {
     service: `AI Automation Package for ${niche}`,
-    priceCents: 150000,
+    priceCents: 200000,
     reasoning:
       "A fixed price with a 50% deposit means one signed client reaches your $1,000 milestone at signing.",
   };
