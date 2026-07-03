@@ -10,18 +10,18 @@ export function MissionControlCard({
   sentence,
   reasoning,
   actionLabel,
-  onAction,
+  actionHref,
 }: {
   sentence: string;
   reasoning: string;
   actionLabel: string;
-  onAction?: () => void;
+  actionHref?: string;
 }) {
   return (
     <Card className="max-w-[640px] w-full p-8 flex flex-col gap-6">
       <h1 className="text-h1 font-semibold text-text-primary">{sentence}</h1>
       <p className="text-body-lg text-text-secondary">{reasoning}</p>
-      <Button variant="primary" onClick={onAction} className="self-start">
+      <Button variant="primary" href={actionHref} className="self-start">
         {actionLabel}
       </Button>
     </Card>

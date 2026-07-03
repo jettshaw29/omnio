@@ -1,4 +1,5 @@
 import { ButtonHTMLAttributes } from "react";
+import Link from "next/link";
 
 /**
  * Two variants only, per 07_VISUAL_DESIGN_SYSTEM.md §11 — a third button
@@ -6,11 +7,16 @@ import { ButtonHTMLAttributes } from "react";
  */
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "text";
+  // When a state's flow isn't built yet, no href is passed and the button
+  // renders disabled rather than doing nothing on click.
+  href?: string;
 };
 
 export function Button({
   variant = "primary",
   className = "",
+  href,
+  disabled,
   ...props
 }: ButtonProps) {
   const base =
@@ -21,5 +27,19 @@ export function Button({
       ? "bg-pine hover:bg-pine-hover text-white px-6 py-3 shadow-resting hover:shadow-raised"
       : "text-text-secondary hover:text-text-primary px-2 py-1";
 
-  return <button className={`${base} ${styles} ${className}`} {...props} />;
+  if (href && !disabled) {
+    return (
+      <Link href={href} className={`${base} ${styles} ${className}`}>
+        {props.children}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      disabled={disabled ?? !href}
+      className={`${base} ${styles} ${className}`}
+      {...props}
+    />
+  );
 }

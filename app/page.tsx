@@ -33,6 +33,7 @@ export default async function MissionControlPage() {
           sentence={state.sentence}
           reasoning={state.reasoning}
           actionLabel={state.actionLabel}
+          actionHref={state.actionHref}
         />
       </main>
     </div>

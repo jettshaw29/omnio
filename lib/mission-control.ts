@@ -17,7 +17,9 @@ export type MissionControlState = {
   sentence: string;
   reasoning: string;
   actionLabel: string;
-  disabled?: boolean;
+  // Undefined means this state's flow isn't built yet — the button renders
+  // disabled rather than silently doing nothing on click.
+  actionHref?: string;
 };
 
 function hasMilestone(agency: AgencyWithRelations, key: string) {
@@ -50,6 +52,7 @@ export function computeMissionControlState(
       reasoning:
         "A specific, well-chosen niche is the single biggest lever for how fast you reach your first client.",
       actionLabel: "Get Started",
+      actionHref: "/onboarding",
     };
   }
 
@@ -138,6 +141,5 @@ export function computeMissionControlState(
     sentence: "You've done it — this is the whole V1 journey.",
     reasoning: "Scale unlocks here later. For now, this is the finish line.",
     actionLabel: "Coming Soon",
-    disabled: true,
   };
 }
