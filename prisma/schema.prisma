@@ -1,0 +1,115 @@
+// Schema mirrors 02_TECH_ARCHITECTURE.md §2 exactly — every field maps to something
+// already committed to in the product spec. SQLite is a local-dev stand-in;
+// swap the datasource to Postgres/Supabase when ready to deploy.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  agencies  Agency[]
+}
+
+model Agency {
+  id                   String    @id @default(cuid())
+  userId               String
+  user                 User      @relation(fields: [userId], references: [id])
+  niche                String?
+  offerService         String?
+  offerPriceCents      Int?
+  brandName            String?
+  positioningStatement String?
+  nicheLockedAt        DateTime?
+  offerLockedAt        DateTime?
+  brandLockedAt        DateTime?
+  createdAt            DateTime  @default(now())
+
+  website       Website?
+  leads         Lead[]
+  clients       Client[]
+  milestones    Milestone[]
+  conversations Conversation[]
+  notifications Notification[]
+}
+
+model Website {
+  id          String    @id @default(cuid())
+  agencyId    String    @unique
+  agency      Agency    @relation(fields: [agencyId], references: [id])
+  contentJson String? // JSON blob: headline, subheadline, problem, solution, proof, pricing, guarantee, cta
+  status      String    @default("draft") // draft | published
+  slug        String?   @unique
+  publishedAt DateTime?
+}
+
+model Lead {
+  id            String    @id @default(cuid())
+  agencyId      String
+  agency        Agency    @relation(fields: [agencyId], references: [id])
+  name          String
+  business      String
+  status        String    @default("new") // new | contacted | replied | call_booked | closed | lost
+  lastContactAt DateTime?
+  createdAt     DateTime  @default(now())
+  client        Client?
+}
+
+model Client {
+  id                     String    @id @default(cuid())
+  agencyId               String
+  agency                 Agency    @relation(fields: [agencyId], references: [id])
+  leadId                 String?   @unique
+  lead                   Lead?     @relation(fields: [leadId], references: [id])
+  projectStatus          String    @default("not_started") // not_started | in_progress | delivered
+  amountPaidCents        Int       @default(0)
+  deliveryChecklistJson  String? // JSON array of {label, done}
+  testimonialRequestedAt DateTime?
+  createdAt              DateTime  @default(now())
+}
+
+// One row per milestone key, per 02_TECH_ARCHITECTURE.md §2 — keys used:
+// published, first_call_booked, first_client_signed, first_1000, testimonial_requested
+model Milestone {
+  id         String   @id @default(cuid())
+  agencyId   String
+  agency     Agency   @relation(fields: [agencyId], references: [id])
+  key        String
+  achievedAt DateTime @default(now())
+
+  @@unique([agencyId, key])
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  agencyId  String
+  agency    Agency    @relation(fields: [agencyId], references: [id])
+  createdAt DateTime  @default(now())
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  role           String // user | assistant
+  content        String
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  agencyId    String
+  agency      Agency    @relation(fields: [agencyId], references: [id])
+  triggerKey  String
+  message     String
+  createdAt   DateTime  @default(now())
+  dismissedAt DateTime?
+}

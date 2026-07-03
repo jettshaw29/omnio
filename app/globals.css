@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Design tokens straight out of 07_VISUAL_DESIGN_SYSTEM.md — nothing here is a
+ * new decision, it's that document translated into Tailwind v4's CSS-first
+ * theme config. Tailwind's default spacing scale (1=4px, 2=8px, 3=12px,
+ * 4=16px, 6=24px, 8=32px, 12=48px, 16=64px, 24=96px) already matches the
+ * spacing system in §5 exactly, so it isn't overridden here. Dark mode isn't
+ * designed for V1 (no such spec exists), so the template's default
+ * prefers-color-scheme override has been removed rather than left in
+ * undesigned.
+ */
+@theme {
+  /* Colors — §4 */
+  --color-background: #faf9f7;
+  --color-surface: #ffffff;
+  --color-border: #e8e6e1;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #6b6a66;
+  --color-text-tertiary: #a3a29d;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-pine: #1f5f4f;
+  --color-pine-hover: #17493c;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-gold: #c99a3c;
+  --color-clay: #b5533d;
+
+  /* Typography — §3. One family everywhere; General Sans is loaded in layout.tsx. */
+  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.1;
+  --text-h1: 1.75rem;
+  --text-h1--line-height: 1.2;
+  --text-h2: 1.25rem;
+  --text-h2--line-height: 1.3;
+  --text-body-lg: 1.0625rem;
+  --text-body-lg--line-height: 1.5;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.5;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.4;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1.3;
+
+  /* Radius — §7. Deliberately not fully pill-shaped anywhere. */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  /* Shadows — §8. Soft and low-opacity everywhere; nothing hard or dark. */
+  --shadow-resting: 0 1px 2px rgba(26, 26, 24, 0.04);
+  --shadow-raised: 0 4px 12px rgba(26, 26, 24, 0.06);
+  --shadow-overlay: 0 12px 32px rgba(26, 26, 24, 0.12);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
 }
