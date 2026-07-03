@@ -62,6 +62,7 @@ export function computeMissionControlState(
       reasoning:
         "A clear, priced offer is what turns your niche into something a stranger can actually say yes to.",
       actionLabel: "Define My Offer",
+      actionHref: "/offer",
     };
   }
 
@@ -71,6 +72,7 @@ export function computeMissionControlState(
       reasoning:
         "Your name and positioning need to exist before we build a website around them.",
       actionLabel: "Build My Brand",
+      actionHref: "/brand",
     };
   }
 
