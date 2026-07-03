@@ -105,6 +105,7 @@ export function computeMissionControlState(
       reasoning:
         "No outreach means no clients, no matter how good your offer and site are.",
       actionLabel: "Start Outreach",
+      actionHref: "/leads",
     };
   }
 
@@ -115,6 +116,7 @@ export function computeMissionControlState(
       reasoning:
         "Most replies come from a second or third touch, not the first message.",
       actionLabel: "Follow Up",
+      actionHref: "/leads",
     };
   }
 
