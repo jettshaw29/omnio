@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
 import { getDeliveryChecklist, type ChecklistItem } from "@/lib/ai/delivery";
@@ -12,7 +13,8 @@ function isChecklistComplete(checklistJson: string | null) {
 }
 
 export default async function DeliverPage() {
-  const agency = await getCurrentAgency();
+  const user = await requireUser();
+  const agency = await getCurrentAgency(user.id, user.email!);
   requireStageAccess(agency, "deliver");
 
   const client =

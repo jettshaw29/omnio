@@ -1,10 +1,12 @@
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
 import { getOfferProposal } from "@/lib/ai/offer";
 import { OfferClient } from "./offer-client";
 
 export default async function OfferPage() {
-  const agency = await getCurrentAgency();
+  const user = await requireUser();
+  const agency = await getCurrentAgency(user.id, user.email!);
   requireStageAccess(agency, "offer");
 
   const initialProposal =

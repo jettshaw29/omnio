@@ -1,6 +1,6 @@
 // Schema mirrors 02_TECH_ARCHITECTURE.md §2 exactly — every field maps to something
-// already committed to in the product spec. SQLite is a local-dev stand-in;
-// swap the datasource to Postgres/Supabase when ready to deploy.
+// already committed to in the product spec. Postgres via Supabase, per the
+// founder-mode call to unblock real multi-tenant signup.
 
 generator client {
   provider = "prisma-client"
@@ -8,19 +8,22 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   createdAt DateTime @default(now())
-  agencies  Agency[]
+  agency    Agency?
 }
 
 model Agency {
   id                   String    @id @default(cuid())
-  userId               String
+  // One agency per user in V1 — 00_V1_PRODUCT_SPEC.md §7's explicit
+  // non-goal is multi-agency/white-label accounts, so this is enforced at
+  // the schema level, not just assumed.
+  userId               String    @unique
   user                 User      @relation(fields: [userId], references: [id])
   niche                String?
   offerService         String?

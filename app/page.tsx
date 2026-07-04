@@ -1,10 +1,12 @@
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { computeMissionControlState } from "@/lib/journey";
 import { MissionControlCard } from "@/components/mission-control-card";
 import { JourneyHeader } from "@/components/journey-header";
 
 export default async function MissionControlPage() {
-  const agency = await getCurrentAgency();
+  const user = await requireUser();
+  const agency = await getCurrentAgency(user.id, user.email!);
   const state = computeMissionControlState(agency);
 
   return (

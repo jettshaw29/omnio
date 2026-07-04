@@ -1,10 +1,12 @@
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
 import { getNextInterviewStep } from "@/lib/ai/interview";
 import { InterviewClient } from "./interview-client";
 
 export default async function OnboardingPage() {
-  const agency = await getCurrentAgency();
+  const user = await requireUser();
+  const agency = await getCurrentAgency(user.id, user.email!);
   requireStageAccess(agency, "niche");
 
   // Fetched server-side so the first question is already there on paint —

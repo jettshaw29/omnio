@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
 import { getProposal } from "@/lib/ai/proposal";
@@ -11,7 +12,8 @@ export default async function CloseClientPage({
   params: Promise<{ leadId: string }>;
 }) {
   const { leadId } = await params;
-  const agency = await getCurrentAgency();
+  const user = await requireUser();
+  const agency = await getCurrentAgency(user.id, user.email!);
   // Close is reached from the Leads workspace, so it shares Leads' gate
   // (a published site) rather than requiring a specific lead status —
   // closing a client informally, without ever flipping the status dropdown

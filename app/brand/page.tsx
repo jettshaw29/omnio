@@ -1,10 +1,12 @@
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
 import { getBrandProposal } from "@/lib/ai/brand";
 import { BrandClient } from "./brand-client";
 
 export default async function BrandPage() {
-  const agency = await getCurrentAgency();
+  const user = await requireUser();
+  const agency = await getCurrentAgency(user.id, user.email!);
   requireStageAccess(agency, "brand");
 
   const initialProposal =

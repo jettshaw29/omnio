@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { CelebrationScreen } from "@/components/celebration-screen";
 
@@ -18,6 +19,7 @@ export default async function CelebratePage({
   const { key } = await params;
   const { queue: queueParam } = await searchParams;
   const queue = queueParam ? queueParam.split(",") : [];
+  const user = await requireUser();
 
   if (key === "first_client") {
     return (
@@ -30,7 +32,7 @@ export default async function CelebratePage({
   }
 
   if (key === "first_1000") {
-    const agency = await getCurrentAgency();
+    const agency = await getCurrentAgency(user.id, user.email!);
 
     const toCents = agency.clients.reduce((sum, c) => sum + c.amountPaidCents, 0);
     const last = agency.clients[agency.clients.length - 1];

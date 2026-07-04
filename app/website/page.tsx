@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
 import { getWebsiteContent, type WebsiteContent } from "@/lib/ai/website";
@@ -21,7 +22,8 @@ async function createUniqueWebsite(agencyId: string, brandName: string, content:
 }
 
 export default async function WebsitePage() {
-  const agency = await getCurrentAgency();
+  const user = await requireUser();
+  const agency = await getCurrentAgency(user.id, user.email!);
   requireStageAccess(agency, "website");
 
   const ctx = {
