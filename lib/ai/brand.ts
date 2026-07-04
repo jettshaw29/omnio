@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getPlaybook } from "./playbook";
+import { extractJson } from "./dev-mode";
 
 export type BrandProposal = {
   name: string;
@@ -14,6 +15,24 @@ ${getPlaybook()}
 The user's locked niche is "${niche}" and their offer is "${service}".
 
 Propose ONE agency name and ONE positioning statement using Playbook §4's formula: "I help [specific niche] [achieve a specific, measurable outcome] using [category], without [the thing they're afraid of]." Names must not be generic or technology-forward — they should feel like a real, calm, competent small business. Call propose_brand with the name, the positioning statement, and one sentence of reasoning.`;
+
+// Dev-mode prompt + parser (see offer.ts for the rationale).
+export function buildBrandPrompt(niche: string, service: string): string {
+  return `${systemPrompt(niche, service)}
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "name": "a specific, non-generic agency name",
+  "positioning": "one sentence following the Playbook §4 formula",
+  "reasoning": "one sentence explaining the choice"
+}`;
+}
+
+export function parseBrandResponse(raw: string): BrandProposal {
+  return extractJson<BrandProposal>(raw);
+}
 
 const BRAND_TOOL: Anthropic.Tool = {
   name: "propose_brand",

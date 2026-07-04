@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { WebsiteTemplate } from "@/components/website-template";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { publishWebsite, regenerateSection, saveSection } from "./actions";
+import { DevAiStep } from "@/components/dev-ai-step";
+import { createDevWebsite, publishWebsite, regenerateSection, saveSection } from "./actions";
 import { runPreflight, type PreflightCheck } from "@/lib/website-preflight";
 import type { WebsiteContent } from "@/lib/ai/website";
 
@@ -20,21 +22,27 @@ export function WebsiteBuilderClient({
   offerService,
   offerPriceCents,
   ctx,
+  devPrompt,
 }: {
   agencyId: string;
-  websiteId: string;
-  initialContent: WebsiteContent;
+  websiteId: string | null;
+  initialContent: WebsiteContent | null;
   justGenerated: boolean;
   alreadyPublished: boolean;
   brandName: string;
   offerService: string;
   offerPriceCents: number;
   ctx: { niche: string; service: string; brandName: string; positioning: string };
+  devPrompt: string | null;
 }) {
-  const [content, setContent] = useState(initialContent);
+  const router = useRouter();
+  const [content, setContent] = useState<WebsiteContent | null>(initialContent);
   const [regeneratingField, setRegeneratingField] = useState<keyof WebsiteContent | null>(
     null
   );
+  // In dev mode, per-section regenerate re-opens the paste panel; the parsed
+  // full-site response supplies just the one field being regenerated.
+  const [devRegenField, setDevRegenField] = useState<keyof WebsiteContent | null>(null);
   const [revealCount, setRevealCount] = useState(justGenerated ? 0 : SECTION_COUNT);
   const [showPreflight, setShowPreflight] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -54,15 +62,48 @@ export function WebsiteBuilderClient({
     return () => clearInterval(interval);
   }, [justGenerated]);
 
+  // Dev mode, no site yet: the pasted response IS the first generation.
+  if (!content || !websiteId) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <header className="flex items-center px-8 py-6">
+          <Link href="/" className="text-body font-medium text-text-primary">
+            {brandName}
+          </Link>
+        </header>
+        <main className="flex-1 flex items-center justify-center px-6">
+          {devPrompt ? (
+            <DevAiStep
+              touchpoint="website"
+              title="Website generation"
+              prompt={devPrompt}
+              onResult={async (parsed) => {
+                await createDevWebsite(agencyId, brandName, parsed as WebsiteContent);
+                router.refresh();
+              }}
+            />
+          ) : (
+            <p className="text-body-lg text-text-secondary">
+              Something went wrong loading your website. Head back and try again.
+            </p>
+          )}
+        </main>
+      </div>
+    );
+  }
+
   function handleFieldChange(field: keyof WebsiteContent, value: string) {
     setContent((prev) =>
-      field === "solutionSteps"
-        ? { ...prev, solutionSteps: JSON.parse(value) }
-        : { ...prev, [field]: value }
+      prev
+        ? field === "solutionSteps"
+          ? { ...prev, solutionSteps: JSON.parse(value) }
+          : { ...prev, [field]: value }
+        : prev
     );
   }
 
   async function handleFieldBlur(field: keyof WebsiteContent) {
+    if (!content || !websiteId) return;
     const value =
       field === "solutionSteps" ? JSON.stringify(content.solutionSteps) : (content[field] as string);
     await saveSection(websiteId, field, value);
@@ -71,16 +112,35 @@ export function WebsiteBuilderClient({
   }
 
   async function handleRegenerate(field: keyof WebsiteContent) {
+    if (devPrompt) {
+      setDevRegenField(field);
+      return;
+    }
+    if (!websiteId) return;
     setRegeneratingField(field);
     const fresh = await regenerateSection(websiteId, field, ctx);
-    setContent((prev) => ({ ...prev, [field]: fresh }));
+    setContent((prev) => (prev ? { ...prev, [field]: fresh } : prev));
     setRegeneratingField(null);
+  }
+
+  async function applyDevRegen(parsed: WebsiteContent) {
+    if (!devRegenField || !websiteId) return;
+    const field = devRegenField;
+    const freshValue = parsed[field];
+    setContent((prev) => (prev ? { ...prev, [field]: freshValue } : prev));
+    await saveSection(
+      websiteId,
+      field,
+      field === "solutionSteps" ? JSON.stringify(freshValue) : (freshValue as string)
+    );
+    setDevRegenField(null);
   }
 
   const checks: PreflightCheck[] = runPreflight(content);
   const allPassed = checks.every((c) => c.passed);
 
   async function handleGoLive() {
+    if (!websiteId) return;
     setIsPublishing(true);
     await publishWebsite(websiteId, agencyId);
   }
@@ -113,6 +173,26 @@ export function WebsiteBuilderClient({
           revealCount={revealCount}
         />
       </main>
+
+      {devRegenField && devPrompt && (
+        <div className="fixed inset-0 bg-text-primary/20 flex items-center justify-center px-6 overflow-auto py-8">
+          <div className="flex flex-col gap-2 max-w-[720px] w-full">
+            <DevAiStep
+              touchpoint="website"
+              title={`Regenerate: ${devRegenField}`}
+              prompt={devPrompt}
+              onResult={(parsed) => applyDevRegen(parsed as WebsiteContent)}
+            />
+            <Button
+              variant="text"
+              onClick={() => setDevRegenField(null)}
+              className="self-center"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
 
       {showPreflight && (
         <div className="fixed inset-0 bg-text-primary/20 flex items-center justify-center px-6">

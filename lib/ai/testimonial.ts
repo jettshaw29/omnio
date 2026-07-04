@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getPlaybook } from "./playbook";
+import { extractJson } from "./dev-mode";
 
 // Playbook §18-19: ask for both in the same moment, right after the win,
 // while it's freshest — not as two separate asks later.
@@ -8,6 +9,22 @@ const systemPrompt = (leadName: string, brandName: string) => `You are Omnio, an
 ${getPlaybook()}
 
 Draft a short message to ${leadName} from ${brandName}, asking for a testimonial and a referral in the same message, right after a successful delivery — following Playbook §18 (a specific guided question, not "could you leave a review") and §19 (a specific, easy referral ask, not "know anyone who needs this?"). Warm, brief, not transactional.`;
+
+// Dev-mode prompt + parser (see offer.ts).
+export function buildTestimonialPrompt(leadName: string, brandName: string): string {
+  return `${systemPrompt(leadName, brandName)}
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "message": "the full testimonial-and-referral message, ready to copy and send"
+}`;
+}
+
+export function parseTestimonialResponse(raw: string): string {
+  return extractJson<{ message: string }>(raw).message;
+}
 
 const TESTIMONIAL_TOOL: Anthropic.Tool = {
   name: "draft_testimonial_ask",

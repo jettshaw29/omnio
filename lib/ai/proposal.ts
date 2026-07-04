@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getPlaybook } from "./playbook";
+import { extractJson } from "./dev-mode";
 
 // Price and deposit are deliberately NOT part of this type — same rule as
 // the website's pricing block (lib/ai/website.ts): the investment is
@@ -34,6 +35,43 @@ Fields:
 - nextStep: a simple, low-friction next step (e.g. reply to confirm).
 
 Never invent details about the prospect that aren't knowable from their name/business alone.`;
+
+// Dev-mode prompt + parser (see offer.ts).
+export function buildProposalPrompt(
+  leadName: string,
+  leadBusiness: string,
+  ctx: ProposalContext
+): string {
+  return `${systemPrompt(ctx, leadName, leadBusiness)}
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "recap": "one sentence recapping their likely situation in their own terms",
+  "whats_included": "what's included, one or two sentences",
+  "timeline": "how fast this goes live",
+  "guarantee": "the risk reversal, one sentence",
+  "next_step": "a simple, low-friction next step"
+}`;
+}
+
+export function parseProposalResponse(raw: string): ProposalContent {
+  const input = extractJson<{
+    recap: string;
+    whats_included: string;
+    timeline: string;
+    guarantee: string;
+    next_step: string;
+  }>(raw);
+  return {
+    recap: input.recap,
+    whatsIncluded: input.whats_included,
+    timeline: input.timeline,
+    guarantee: input.guarantee,
+    nextStep: input.next_step,
+  };
+}
 
 const PROPOSAL_TOOL: Anthropic.Tool = {
   name: "draft_proposal",

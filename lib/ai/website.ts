@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getPlaybook } from "./playbook";
+import { extractJson } from "./dev-mode";
 
 // Pricing is deliberately NOT part of this type — it's rendered straight from
 // the locked Offer (Agency.offerService/offerPriceCents), never a separately
@@ -15,7 +16,7 @@ export type WebsiteContent = {
   ctaLabel: string;
 };
 
-type WebsiteContext = {
+export type WebsiteContext = {
   niche: string;
   service: string;
   brandName: string;
@@ -39,6 +40,46 @@ ${getPlaybook()}
 Generate this one-page website for a new agency, following Playbook §7's exact structure. Niche: "${ctx.niche}". Offer: "${ctx.service}". Brand: "${ctx.brandName}". Positioning: "${ctx.positioning}".
 
 Never fabricate a testimonial or a result that doesn't exist yet (Playbook §8, Article VI) — the proof section must be honest about having no clients yet.`;
+
+// Dev-mode prompt + parser (see offer.ts for the rationale). Exported so the
+// server component can build the prompt and the resolver can parse the paste.
+export function buildWebsitePrompt(ctx: WebsiteContext): string {
+  return `${systemPrompt(ctx)}
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "headline": "${FIELD_DESCRIPTIONS.headline}",
+  "subheadline": "${FIELD_DESCRIPTIONS.subheadline}",
+  "problem": "${FIELD_DESCRIPTIONS.problem}",
+  "solution_steps": ["step one", "step two", "step three"],
+  "proof": "${FIELD_DESCRIPTIONS.proof}",
+  "guarantee": "${FIELD_DESCRIPTIONS.guarantee}",
+  "cta_label": "${FIELD_DESCRIPTIONS.ctaLabel}"
+}`;
+}
+
+export function parseWebsiteResponse(raw: string): WebsiteContent {
+  const input = extractJson<{
+    headline: string;
+    subheadline: string;
+    problem: string;
+    solution_steps: string[];
+    proof: string;
+    guarantee: string;
+    cta_label: string;
+  }>(raw);
+  return {
+    headline: input.headline,
+    subheadline: input.subheadline,
+    problem: input.problem,
+    solutionSteps: [input.solution_steps[0], input.solution_steps[1], input.solution_steps[2]],
+    proof: input.proof,
+    guarantee: input.guarantee,
+    ctaLabel: input.cta_label,
+  };
+}
 
 const WEBSITE_TOOL: Anthropic.Tool = {
   name: "generate_website_content",

@@ -1,11 +1,12 @@
 import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
+import { isAiDevMode } from "@/lib/ai/dev-mode";
 import { LeadsClient } from "./leads-client";
 
 export default async function LeadsPage() {
   const user = await requireUser();
-  const agency = await getCurrentAgency(user.id, user.email!);
+  const agency = await getCurrentAgency(user.id, user.email);
   requireStageAccess(agency, "outreach");
 
   return (
@@ -19,6 +20,7 @@ export default async function LeadsPage() {
         brandName: agency.brandName!,
         positioning: agency.positioningStatement ?? "",
       }}
+      devMode={isAiDevMode()}
     />
   );
 }

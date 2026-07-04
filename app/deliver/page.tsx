@@ -3,7 +3,12 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
-import { getDeliveryChecklist, type ChecklistItem } from "@/lib/ai/delivery";
+import {
+  getDeliveryChecklist,
+  buildChecklistPrompt,
+  type ChecklistItem,
+} from "@/lib/ai/delivery";
+import { isAiDevMode } from "@/lib/ai/dev-mode";
 import { DeliverClient } from "./deliver-client";
 
 function isChecklistComplete(checklistJson: string | null) {
@@ -14,7 +19,7 @@ function isChecklistComplete(checklistJson: string | null) {
 
 export default async function DeliverPage() {
   const user = await requireUser();
-  const agency = await getCurrentAgency(user.id, user.email!);
+  const agency = await getCurrentAgency(user.id, user.email);
   requireStageAccess(agency, "deliver");
 
   const client =
@@ -26,10 +31,12 @@ export default async function DeliverPage() {
     redirect("/");
   }
 
-  let checklist: ChecklistItem[];
+  const devMode = isAiDevMode();
+
+  let checklist: ChecklistItem[] | null = null;
   if (client.deliveryChecklistJson) {
     checklist = JSON.parse(client.deliveryChecklistJson);
-  } else {
+  } else if (!devMode) {
     checklist = await getDeliveryChecklist(agency.offerService!);
     await prisma.client.update({
       where: { id: client.id },
@@ -40,6 +47,12 @@ export default async function DeliverPage() {
     });
   }
 
+  // In dev mode the checklist prompt is only needed when no checklist
+  // exists yet; the status-update and testimonial prompts are fetched on
+  // demand by the client since they depend on live checklist state.
+  const devChecklistPrompt =
+    devMode && !checklist ? buildChecklistPrompt(agency.offerService!) : null;
+
   return (
     <DeliverClient
       clientId={client.id}
@@ -47,6 +60,8 @@ export default async function DeliverPage() {
       leadName={client.lead?.name ?? "your client"}
       checklist={checklist}
       testimonialRequestedAt={client.testimonialRequestedAt}
+      devMode={devMode}
+      devChecklistPrompt={devChecklistPrompt}
     />
   );
 }

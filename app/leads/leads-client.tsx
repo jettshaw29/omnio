@@ -4,7 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { JourneyHeader } from "@/components/journey-header";
-import { addLead, draftOutreachForLead, updateLeadStatus } from "./actions";
+import { DevAiStep } from "@/components/dev-ai-step";
+import {
+  addLead,
+  draftOutreachForLead,
+  getOutreachDevPrompt,
+  updateLeadStatus,
+} from "./actions";
 import type { Lead } from "@/generated/prisma/client";
 import type { OutreachContext } from "@/lib/ai/outreach";
 
@@ -25,16 +31,19 @@ export function LeadsClient({
   brandName,
   leads,
   ctx,
+  devMode,
 }: {
   agencyId: string;
   brandName: string | null;
   leads: Lead[];
   ctx: OutreachContext;
+  devMode: boolean;
 }) {
   const [name, setName] = useState("");
   const [business, setBusiness] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [devPrompts, setDevPrompts] = useState<Record<string, string>>({});
   const [draftingId, setDraftingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -49,6 +58,13 @@ export function LeadsClient({
 
   async function handleDraft(leadId: string) {
     setDraftingId(leadId);
+    if (devMode) {
+      // Fetch the exact per-lead prompt and open the paste panel inline.
+      const prompt = await getOutreachDevPrompt(leadId, ctx);
+      setDevPrompts((prev) => ({ ...prev, [leadId]: prompt }));
+      setDraftingId(null);
+      return;
+    }
     const message = await draftOutreachForLead(leadId, ctx);
     setDrafts((prev) => ({ ...prev, [leadId]: message }));
     setDraftingId(null);
@@ -135,6 +151,22 @@ export function LeadsClient({
                     )}
                   </div>
                 </div>
+
+                {devPrompts[lead.id] && !drafts[lead.id] && (
+                  <DevAiStep
+                    touchpoint="outreach"
+                    title={`Outreach for ${lead.name}`}
+                    prompt={devPrompts[lead.id]}
+                    onResult={(parsed) => {
+                      setDrafts((prev) => ({ ...prev, [lead.id]: parsed as string }));
+                      setDevPrompts((prev) => {
+                        const next = { ...prev };
+                        delete next[lead.id];
+                        return next;
+                      });
+                    }}
+                  />
+                )}
 
                 {drafts[lead.id] && (
                   <div className="flex flex-col gap-2 bg-background border border-border rounded-md p-4">

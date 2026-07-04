@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
-import { getProposal } from "@/lib/ai/proposal";
+import { getProposal, buildProposalPrompt } from "@/lib/ai/proposal";
+import { isAiDevMode } from "@/lib/ai/dev-mode";
 import { CloseClientForm } from "./close-client-form";
 
 export default async function CloseClientPage({
@@ -35,7 +36,9 @@ export default async function CloseClientPage({
     positioning: agency.positioningStatement ?? "",
   };
 
-  const proposal = await getProposal(lead.name, lead.business, ctx);
+  const devMode = isAiDevMode();
+  const proposal = devMode ? null : await getProposal(lead.name, lead.business, ctx);
+  const devPrompt = devMode ? buildProposalPrompt(lead.name, lead.business, ctx) : null;
 
   return (
     <CloseClientForm
@@ -46,6 +49,7 @@ export default async function CloseClientPage({
       offerService={agency.offerService!}
       offerPriceCents={agency.offerPriceCents!}
       initialProposal={proposal}
+      devPrompt={devPrompt}
       ctx={ctx}
     />
   );

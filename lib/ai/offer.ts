@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getPlaybook } from "./playbook";
+import { extractJson } from "./dev-mode";
 
 export type OfferProposal = {
   service: string;
@@ -14,6 +15,32 @@ ${getPlaybook()}
 The user's locked niche is: "${niche}".
 
 Propose ONE productized service offer for this niche, using Playbook §3 (service selection) and §6 (offer creation). Price it per §5 — specifically, structure the price so a single closed deal's deposit alone can reach the $1,000 milestone in one motion, which is the single highest-leverage pricing decision for a new agency. Call propose_offer with a specific, named service (not "custom AI solutions"), a whole-dollar price, and one concrete sentence of reasoning grounded in this niche.`;
+
+// Dev-mode: the exact prompt a human pastes into Claude, plus the parser for
+// what they paste back. Same system prompt as the live call — only the output
+// mechanism differs (JSON in chat vs. a forced tool call), so what we're
+// validating (the instructions + context) is identical.
+export function buildOfferPrompt(niche: string): string {
+  return `${systemPrompt(niche)}
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "service": "a specific, named productized service (never 'custom AI solutions')",
+  "price_dollars": 2000,
+  "reasoning": "one concrete sentence tied to this niche"
+}`;
+}
+
+export function parseOfferResponse(raw: string): OfferProposal {
+  const input = extractJson<{ service: string; price_dollars: number; reasoning: string }>(raw);
+  return {
+    service: input.service,
+    priceCents: Math.round(input.price_dollars * 100),
+    reasoning: input.reasoning,
+  };
+}
 
 const OFFER_TOOL: Anthropic.Tool = {
   name: "propose_offer",

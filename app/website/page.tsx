@@ -1,29 +1,14 @@
-import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { getCurrentAgency } from "@/lib/current-agency";
 import { requireStageAccess } from "@/lib/journey";
-import { getWebsiteContent, type WebsiteContent } from "@/lib/ai/website";
-import { slugify } from "@/lib/slug";
+import { getWebsiteContent, buildWebsitePrompt, type WebsiteContent } from "@/lib/ai/website";
+import { isAiDevMode } from "@/lib/ai/dev-mode";
+import { createWebsiteRecord } from "./actions";
 import { WebsiteBuilderClient } from "./website-builder-client";
-
-async function createUniqueWebsite(agencyId: string, brandName: string, content: WebsiteContent) {
-  const base = slugify(brandName) || "agency";
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const slug = attempt === 0 ? base : `${base}-${Math.random().toString(36).slice(2, 6)}`;
-    try {
-      return await prisma.website.create({
-        data: { agencyId, slug, status: "draft", contentJson: JSON.stringify(content) },
-      });
-    } catch {
-      // slug collision — retry with a suffix
-    }
-  }
-  throw new Error("Could not allocate a unique website slug.");
-}
 
 export default async function WebsitePage() {
   const user = await requireUser();
-  const agency = await getCurrentAgency(user.id, user.email!);
+  const agency = await getCurrentAgency(user.id, user.email);
   requireStageAccess(agency, "website");
 
   const ctx = {
@@ -33,27 +18,35 @@ export default async function WebsitePage() {
     positioning: agency.positioningStatement ?? "",
   };
 
+  const devMode = isAiDevMode();
+  // In dev mode the whole-site prompt is always available: it powers first
+  // generation when no site exists yet, and per-section regenerates after.
+  const devPrompt = devMode ? buildWebsitePrompt(ctx) : null;
+
   let website = agency.website;
   let justGenerated = false;
-  if (!website) {
+  if (!website && !devMode) {
     const content = await getWebsiteContent(ctx);
-    website = await createUniqueWebsite(agency.id, agency.brandName!, content);
+    website = await createWebsiteRecord(agency.id, agency.brandName!, content);
     justGenerated = true;
   }
 
-  const content = JSON.parse(website.contentJson ?? "{}") as WebsiteContent;
+  const content = website
+    ? (JSON.parse(website.contentJson ?? "{}") as WebsiteContent)
+    : null;
 
   return (
     <WebsiteBuilderClient
       agencyId={agency.id}
-      websiteId={website.id}
+      websiteId={website?.id ?? null}
       initialContent={content}
       justGenerated={justGenerated}
-      alreadyPublished={website.status === "published"}
+      alreadyPublished={website?.status === "published"}
       brandName={agency.brandName!}
       offerService={agency.offerService!}
       offerPriceCents={agency.offerPriceCents!}
       ctx={ctx}
+      devPrompt={devPrompt}
     />
   );
 }

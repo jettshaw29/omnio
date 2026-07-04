@@ -1,9 +1,45 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getWebsiteContent, type WebsiteContent } from "@/lib/ai/website";
 import { runPreflight } from "@/lib/website-preflight";
+import { slugify } from "@/lib/slug";
+
+// Shared by the live path (page.tsx, content from the API) and the dev-mode
+// path (createDevWebsite below, content from a hand-pasted response) — one
+// place slug allocation lives either way.
+export async function createWebsiteRecord(
+  agencyId: string,
+  brandName: string,
+  content: WebsiteContent
+) {
+  const base = slugify(brandName) || "agency";
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const slug = attempt === 0 ? base : `${base}-${Math.random().toString(36).slice(2, 6)}`;
+    try {
+      return await prisma.website.create({
+        data: { agencyId, slug, status: "draft", contentJson: JSON.stringify(content) },
+      });
+    } catch {
+      // slug collision — retry with a suffix
+    }
+  }
+  throw new Error("Could not allocate a unique website slug.");
+}
+
+// Dev mode: persist a hand-pasted generation, then let the page re-render
+// with the real record — from here on the flow is identical to live.
+export async function createDevWebsite(
+  agencyId: string,
+  brandName: string,
+  content: WebsiteContent
+) {
+  await createWebsiteRecord(agencyId, brandName, content);
+  revalidatePath("/website");
+  revalidatePath("/");
+}
 
 export async function saveSection(
   websiteId: string,

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getPlaybook } from "./playbook";
+import { extractJson } from "./dev-mode";
 
 export type ChecklistItem = { label: string; done: boolean };
 
@@ -8,6 +9,23 @@ const checklistSystemPrompt = (service: string) => `You are Omnio, an experience
 ${getPlaybook()}
 
 Generate a delivery checklist for this specific service, using Playbook §16 (onboarding) and §17 (delivery). 5-7 concrete steps, in order, from kickoff to handover — e.g. gathering access/info, building/configuring, testing with real scenarios, client walkthrough, going live. Service: "${service}".`;
+
+// Dev-mode prompt + parser for the checklist (see offer.ts).
+export function buildChecklistPrompt(service: string): string {
+  return `${checklistSystemPrompt(service)}
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "steps": ["step one", "step two", "step three", "step four", "step five"]
+}`;
+}
+
+export function parseChecklistResponse(raw: string): ChecklistItem[] {
+  const input = extractJson<{ steps: string[] }>(raw);
+  return input.steps.map((label) => ({ label, done: false }));
+}
 
 const CHECKLIST_TOOL: Anthropic.Tool = {
   name: "generate_checklist",
@@ -67,6 +85,28 @@ const statusUpdateSystemPrompt = (
 ${getPlaybook()}
 
 Draft a short, warm client status update for ${leadName} from ${brandName}, following Playbook §17's "never go dark" guidance. Completed so far: ${completedSteps.join("; ") || "just getting started"}. Still to do: ${remainingSteps.join("; ") || "nothing — almost done"}. Keep it brief, no jargon, confident.`;
+
+// Dev-mode prompt + parser for the status update (see offer.ts).
+export function buildStatusUpdatePrompt(
+  leadName: string,
+  brandName: string,
+  checklist: ChecklistItem[]
+): string {
+  const completedSteps = checklist.filter((i) => i.done).map((i) => i.label);
+  const remainingSteps = checklist.filter((i) => !i.done).map((i) => i.label);
+  return `${statusUpdateSystemPrompt(leadName, brandName, completedSteps, remainingSteps)}
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "message": "the full status-update message, ready to copy and send"
+}`;
+}
+
+export function parseStatusUpdateResponse(raw: string): string {
+  return extractJson<{ message: string }>(raw).message;
+}
 
 const STATUS_UPDATE_TOOL: Anthropic.Tool = {
   name: "draft_status_update",

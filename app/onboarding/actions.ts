@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getRouteAfter } from "@/lib/journey";
 import {
   getNextInterviewStep,
+  buildInterviewPrompt,
   type InterviewMessage,
   type InterviewStep,
   type NicheOption,
@@ -14,6 +15,13 @@ export async function requestNextStep(
   history: InterviewMessage[]
 ): Promise<InterviewStep> {
   return getNextInterviewStep(history);
+}
+
+// Dev mode: the interview is multi-turn, so each answer needs a freshly
+// built prompt (the playbook is read from the filesystem, so this must run
+// server-side rather than in the client).
+export async function requestDevPrompt(history: InterviewMessage[]): Promise<string> {
+  return buildInterviewPrompt(history);
 }
 
 // Interview transcript is persisted once, at the moment the niche locks,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { JourneyHeader } from "@/components/journey-header";
+import { DevAiStep } from "@/components/dev-ai-step";
 import { regenerateProposal, signClient } from "./actions";
 import type { ProposalContent } from "@/lib/ai/proposal";
 
@@ -27,6 +28,7 @@ export function CloseClientForm({
   offerService,
   offerPriceCents,
   initialProposal,
+  devPrompt,
   ctx,
 }: {
   agencyId: string;
@@ -35,10 +37,11 @@ export function CloseClientForm({
   leadName: string;
   offerService: string;
   offerPriceCents: number;
-  initialProposal: ProposalContent;
+  initialProposal: ProposalContent | null;
+  devPrompt: string | null;
   ctx: { niche: string; service: string; brandName: string; positioning: string };
 }) {
-  const [proposal, setProposal] = useState(initialProposal);
+  const [proposal, setProposal] = useState<ProposalContent | null>(initialProposal);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
   const [depositDollars, setDepositDollars] = useState(
@@ -52,10 +55,36 @@ export function CloseClientForm({
   });
 
   async function handleRegenerate() {
+    if (devPrompt) {
+      setProposal(null);
+      return;
+    }
     setIsRegenerating(true);
     const fresh = await regenerateProposal(leadId, ctx);
     setProposal(fresh);
     setIsRegenerating(false);
+  }
+
+  if (!proposal) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <JourneyHeader brandName={brandName} />
+        <main className="flex-1 flex items-center justify-center px-6 py-16">
+          {devPrompt ? (
+            <DevAiStep
+              touchpoint="proposal"
+              title={`Proposal for ${leadName}`}
+              prompt={devPrompt}
+              onResult={(parsed) => setProposal(parsed as ProposalContent)}
+            />
+          ) : (
+            <p className="text-body-lg text-text-secondary">
+              Something went wrong loading the proposal. Head back and try again.
+            </p>
+          )}
+        </main>
+      </div>
+    );
   }
 
   async function handleSign() {
@@ -64,7 +93,7 @@ export function CloseClientForm({
   }
 
   function updateField(field: keyof ProposalContent, value: string) {
-    setProposal((prev) => ({ ...prev, [field]: value }));
+    setProposal((prev) => (prev ? { ...prev, [field]: value } : prev));
   }
 
   return (

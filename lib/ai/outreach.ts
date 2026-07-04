@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getPlaybook } from "./playbook";
+import { extractJson } from "./dev-mode";
 
 export type OutreachContext = {
   niche: string;
@@ -17,6 +18,30 @@ Draft ONE cold outreach message using Playbook §10's structure: a specific, per
 Agency: "${ctx.brandName}" (${ctx.positioning}). Niche: "${ctx.niche}". Offer: "${ctx.service}".
 
 Never draft anything that pretends to already know the recipient personally — reference only their business/industry, since that's all that's actually known.`;
+
+// Dev-mode prompt + parser (see offer.ts). The message can be many lines, so
+// wrapping it in JSON (rather than taking the paste raw) keeps the parse
+// unambiguous even if Claude adds a "Here's the message:" preamble.
+export function buildOutreachPrompt(
+  leadName: string,
+  leadBusiness: string,
+  ctx: OutreachContext
+): string {
+  return `${systemPrompt(ctx)}
+
+Draft outreach for ${leadName} at ${leadBusiness}.
+
+---
+
+Respond with ONLY a JSON object in exactly this shape, nothing else:
+{
+  "message": "the full outreach message, ready to copy and send"
+}`;
+}
+
+export function parseOutreachResponse(raw: string): string {
+  return extractJson<{ message: string }>(raw).message;
+}
 
 const OUTREACH_TOOL: Anthropic.Tool = {
   name: "draft_outreach",
