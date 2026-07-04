@@ -1,18 +1,9 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentAgency } from "@/lib/current-agency";
+import { requireStageAccess } from "@/lib/journey";
 import { getDeliveryChecklist, type ChecklistItem } from "@/lib/ai/delivery";
 import { DeliverClient } from "./deliver-client";
-
-async function getCurrentAgency() {
-  const agency = await prisma.agency.findFirst({
-    orderBy: { createdAt: "asc" },
-    include: { clients: { include: { lead: true }, orderBy: { createdAt: "asc" } } },
-  });
-  if (!agency) {
-    throw new Error("No agency found — run `npx prisma db seed` first.");
-  }
-  return agency;
-}
 
 function isChecklistComplete(checklistJson: string | null) {
   if (!checklistJson) return false;
@@ -22,9 +13,7 @@ function isChecklistComplete(checklistJson: string | null) {
 
 export default async function DeliverPage() {
   const agency = await getCurrentAgency();
-  if (!agency.offerService) {
-    redirect("/");
-  }
+  requireStageAccess(agency, "deliver");
 
   const client =
     agency.clients.find(
@@ -39,7 +28,7 @@ export default async function DeliverPage() {
   if (client.deliveryChecklistJson) {
     checklist = JSON.parse(client.deliveryChecklistJson);
   } else {
-    checklist = await getDeliveryChecklist(agency.offerService);
+    checklist = await getDeliveryChecklist(agency.offerService!);
     await prisma.client.update({
       where: { id: client.id },
       data: {
@@ -52,6 +41,7 @@ export default async function DeliverPage() {
   return (
     <DeliverClient
       clientId={client.id}
+      brandName={agency.brandName}
       leadName={client.lead?.name ?? "your client"}
       checklist={checklist}
       testimonialRequestedAt={client.testimonialRequestedAt}

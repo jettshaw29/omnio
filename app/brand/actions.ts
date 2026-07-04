@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getRouteAfter } from "@/lib/journey";
 import { getBrandProposal, type BrandProposal } from "@/lib/ai/brand";
 
 export async function regenerateBrand(
@@ -25,5 +26,6 @@ export async function confirmBrand(
     },
   });
 
-  redirect("/");
+  // Auto-advances straight into Website Builder (lib/journey.ts's autoAdvance).
+  redirect(getRouteAfter("brand"));
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { JourneyHeader } from "@/components/journey-header";
 import {
   draftStatusUpdateForClient,
   draftTestimonialAskForClient,
@@ -13,11 +14,13 @@ import type { ChecklistItem } from "@/lib/ai/delivery";
 
 export function DeliverClient({
   clientId,
+  brandName,
   leadName,
   checklist,
   testimonialRequestedAt,
 }: {
   clientId: string;
+  brandName: string | null;
   leadName: string;
   checklist: ChecklistItem[];
   testimonialRequestedAt: Date | null;
@@ -58,7 +61,9 @@ export function DeliverClient({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-16">
+    <div className="min-h-screen flex flex-col">
+      <JourneyHeader brandName={brandName} />
+      <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="max-w-[640px] w-full flex flex-col gap-6">
         <Card className="p-8 flex flex-col gap-6">
           <h1 className="text-h1 font-semibold text-text-primary">
@@ -143,6 +148,7 @@ export function DeliverClient({
           </Card>
         )}
       </div>
+      </main>
     </div>
   );
 }

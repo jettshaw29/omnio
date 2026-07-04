@@ -1,19 +1,9 @@
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCurrentAgency } from "@/lib/current-agency";
+import { requireStageAccess } from "@/lib/journey";
 import { getWebsiteContent, type WebsiteContent } from "@/lib/ai/website";
 import { slugify } from "@/lib/slug";
 import { WebsiteBuilderClient } from "./website-builder-client";
-
-async function getCurrentAgency() {
-  const agency = await prisma.agency.findFirst({
-    orderBy: { createdAt: "asc" },
-    include: { website: true },
-  });
-  if (!agency) {
-    throw new Error("No agency found — run `npx prisma db seed` first.");
-  }
-  return agency;
-}
 
 async function createUniqueWebsite(agencyId: string, brandName: string, content: WebsiteContent) {
   const base = slugify(brandName) || "agency";
@@ -32,14 +22,12 @@ async function createUniqueWebsite(agencyId: string, brandName: string, content:
 
 export default async function WebsitePage() {
   const agency = await getCurrentAgency();
-  if (!agency.niche || !agency.offerService || !agency.offerPriceCents || !agency.brandName) {
-    redirect("/");
-  }
+  requireStageAccess(agency, "website");
 
   const ctx = {
-    niche: agency.niche,
-    service: agency.offerService,
-    brandName: agency.brandName,
+    niche: agency.niche!,
+    service: agency.offerService!,
+    brandName: agency.brandName!,
     positioning: agency.positioningStatement ?? "",
   };
 
@@ -47,7 +35,7 @@ export default async function WebsitePage() {
   let justGenerated = false;
   if (!website) {
     const content = await getWebsiteContent(ctx);
-    website = await createUniqueWebsite(agency.id, agency.brandName, content);
+    website = await createUniqueWebsite(agency.id, agency.brandName!, content);
     justGenerated = true;
   }
 
@@ -60,9 +48,9 @@ export default async function WebsitePage() {
       initialContent={content}
       justGenerated={justGenerated}
       alreadyPublished={website.status === "published"}
-      brandName={agency.brandName}
-      offerService={agency.offerService}
-      offerPriceCents={agency.offerPriceCents}
+      brandName={agency.brandName!}
+      offerService={agency.offerService!}
+      offerPriceCents={agency.offerPriceCents!}
       ctx={ctx}
     />
   );

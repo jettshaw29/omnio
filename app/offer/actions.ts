@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getRouteAfter } from "@/lib/journey";
 import { getOfferProposal, type OfferProposal } from "@/lib/ai/offer";
 
 export async function regenerateOffer(niche: string): Promise<OfferProposal> {
@@ -22,5 +23,6 @@ export async function confirmOffer(
     },
   });
 
-  redirect("/");
+  // Auto-advances straight into Brand (lib/journey.ts's autoAdvance).
+  redirect(getRouteAfter("offer"));
 }

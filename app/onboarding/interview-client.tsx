@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { JourneyHeader } from "@/components/journey-header";
 import { requestNextStep, lockNiche } from "./actions";
 import type { InterviewMessage, InterviewStep, NicheOption } from "@/lib/ai/interview";
 
@@ -11,9 +12,11 @@ type Phase = "asking" | "acknowledging" | "thinking" | "locking";
 // no progress bar, a quiet acknowledgment instead of a counter.
 export function InterviewClient({
   agencyId,
+  brandName,
   initialStep,
 }: {
   agencyId: string;
+  brandName: string | null;
   initialStep: InterviewStep;
 }) {
   const [history, setHistory] = useState<InterviewMessage[]>([]);
@@ -57,7 +60,9 @@ export function InterviewClient({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-screen flex flex-col">
+      <JourneyHeader brandName={brandName} />
+      <main className="flex-1 flex items-center justify-center px-6">
       <div
         className={`max-w-[640px] w-full flex flex-col gap-6 transition-opacity duration-300 ${
           visible ? "opacity-100" : "opacity-0"
@@ -132,6 +137,7 @@ export function InterviewClient({
           </>
         )}
       </div>
+      </main>
     </div>
   );
 }

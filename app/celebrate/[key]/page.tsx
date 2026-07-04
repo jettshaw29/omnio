@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getCurrentAgency } from "@/lib/current-agency";
 import { CelebrationScreen } from "@/components/celebration-screen";
 
 function nextHrefFor(queue: string[]): string {
@@ -30,13 +30,7 @@ export default async function CelebratePage({
   }
 
   if (key === "first_1000") {
-    const agency = await prisma.agency.findFirst({
-      orderBy: { createdAt: "asc" },
-      include: { clients: { orderBy: { createdAt: "asc" } } },
-    });
-    if (!agency) {
-      throw new Error("No agency found — run `npx prisma db seed` first.");
-    }
+    const agency = await getCurrentAgency();
 
     const toCents = agency.clients.reduce((sum, c) => sum + c.amountPaidCents, 0);
     const last = agency.clients[agency.clients.length - 1];

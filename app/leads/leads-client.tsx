@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { JourneyHeader } from "@/components/journey-header";
 import { addLead, draftOutreachForLead, updateLeadStatus } from "./actions";
 import type { Lead } from "@/generated/prisma/client";
 import type { OutreachContext } from "@/lib/ai/outreach";
@@ -21,10 +22,12 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 // once is the actual job here, unlike the narrow single-focus flows.
 export function LeadsClient({
   agencyId,
+  brandName,
   leads,
   ctx,
 }: {
   agencyId: string;
+  brandName: string | null;
   leads: Lead[];
   ctx: OutreachContext;
 }) {
@@ -58,7 +61,9 @@ export function LeadsClient({
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-6 py-16">
+    <div className="min-h-screen flex flex-col">
+      <JourneyHeader brandName={brandName} />
+      <main className="flex-1 flex flex-col items-center px-6 py-16">
       <div className="max-w-[960px] w-full flex flex-col gap-8">
         <h1 className="text-h1 font-semibold text-text-primary">Your leads</h1>
 
@@ -150,6 +155,7 @@ export function LeadsClient({
           </div>
         )}
       </div>
+      </main>
     </div>
   );
 }

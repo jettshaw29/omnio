@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { JourneyHeader } from "@/components/journey-header";
 import { confirmOffer, regenerateOffer } from "./actions";
 import type { OfferProposal } from "@/lib/ai/offer";
 
@@ -11,10 +12,12 @@ import type { OfferProposal } from "@/lib/ai/offer";
 // AI assists, the human decides).
 export function OfferClient({
   agencyId,
+  brandName,
   niche,
   initialProposal,
 }: {
   agencyId: string;
+  brandName: string | null;
   niche: string;
   initialProposal: OfferProposal;
 }) {
@@ -41,7 +44,9 @@ export function OfferClient({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-screen flex flex-col">
+      <JourneyHeader brandName={brandName} />
+      <main className="flex-1 flex items-center justify-center px-6">
       <Card className="max-w-[640px] w-full p-8 flex flex-col gap-6">
         <h1 className="text-h1 font-semibold text-text-primary">
           Here&apos;s what I&apos;d sell.
@@ -90,6 +95,7 @@ export function OfferClient({
           </Button>
         </div>
       </Card>
+      </main>
     </div>
   );
 }

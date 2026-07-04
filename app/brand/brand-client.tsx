@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { JourneyHeader } from "@/components/journey-header";
 import { confirmBrand, regenerateBrand } from "./actions";
 import type { BrandProposal } from "@/lib/ai/brand";
 
@@ -11,11 +12,13 @@ import type { BrandProposal } from "@/lib/ai/brand";
 // around a real, priced service rather than the reverse.
 export function BrandClient({
   agencyId,
+  brandName,
   niche,
   service,
   initialProposal,
 }: {
   agencyId: string;
+  brandName: string | null;
   niche: string;
   service: string;
   initialProposal: BrandProposal;
@@ -41,7 +44,9 @@ export function BrandClient({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
+    <div className="min-h-screen flex flex-col">
+      <JourneyHeader brandName={brandName} />
+      <main className="flex-1 flex items-center justify-center px-6">
       <Card className="max-w-[640px] w-full p-8 flex flex-col gap-6">
         <h1 className="text-h1 font-semibold text-text-primary">
           {name || "Here's your brand."}
@@ -87,6 +92,7 @@ export function BrandClient({
           </Button>
         </div>
       </Card>
+      </main>
     </div>
   );
 }

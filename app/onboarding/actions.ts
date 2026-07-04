@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getRouteAfter } from "@/lib/journey";
 import {
   getNextInterviewStep,
   type InterviewMessage,
@@ -42,5 +43,8 @@ export async function lockNiche(
     }
   });
 
-  redirect("/");
+  // Auto-advances straight into Offer instead of bouncing through Mission
+  // Control — there's no decision to make in between, just the next form
+  // in the Build phase (lib/journey.ts's autoAdvance).
+  redirect(getRouteAfter("niche"));
 }

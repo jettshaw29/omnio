@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { WebsiteTemplate } from "@/components/website-template";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -87,7 +88,9 @@ export function WebsiteBuilderClient({
   return (
     <div className="min-h-screen flex flex-col">
       <header className="flex items-center justify-between px-8 py-6">
-        <span className="text-body font-medium text-text-primary">{brandName}</span>
+        <Link href="/" className="text-body font-medium text-text-primary">
+          {brandName}
+        </Link>
         <div className="flex items-center gap-3">
           {savedField && <span className="text-small text-pine">Saved ✓</span>}
           <Button variant="primary" onClick={() => setShowPreflight(true)}>
