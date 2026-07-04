@@ -136,6 +136,7 @@ export function computeMissionControlState(
       reasoning:
         "A great delivery is what turns this client into a testimonial and a referral.",
       actionLabel: "Continue Delivery",
+      actionHref: "/deliver",
     };
   }
 
@@ -144,6 +145,10 @@ export function computeMissionControlState(
       sentence: "Ask your client for a testimonial.",
       reasoning: "The best time to ask is right now, while the win is still fresh.",
       actionLabel: "Ask For Testimonial",
+      // Same destination as the previous state — the testimonial ask lives
+      // on the same Deliver screen once the checklist is complete, matching
+      // the preflight-folded-in precedent from Website Builder.
+      actionHref: "/deliver",
     };
   }
 
