@@ -22,6 +22,7 @@ export type StageKey =
   | "brand"
   | "website"
   | "launch"
+  | "prospect"
   | "outreach"
   | "follow_up"
   | "prep_call"
@@ -132,10 +133,21 @@ export const STAGES: Stage[] = [
     autoAdvance: false,
   },
   {
+    key: "prospect",
+    route: "/prospect",
+    sentence: "Find your first 25 prospects.",
+    reasoning:
+      "Before you write a single message, you need a list. Omnio will show you exactly where to look and what to look for in your specific niche.",
+    actionLabel: "Build My List",
+    isComplete: (a) => !!a.prospectStrategyJson,
+    autoAdvance: false,
+  },
+  {
     key: "outreach",
     route: "/leads",
-    sentence: "Let's find your first client.",
-    reasoning: "No outreach means no clients, no matter how good your offer and site are.",
+    sentence: "Write and send your first outreach messages.",
+    reasoning:
+      "You have a list. Now Omnio writes the message — you just personalize the opener and hit send.",
     actionLabel: "Start Outreach",
     isComplete: (a) => a.leads.some((l) => l.status !== "new"),
     autoAdvance: false,
@@ -145,9 +157,10 @@ export const STAGES: Stage[] = [
     route: "/leads",
     sentence: (a) => {
       const n = a.leads.filter((l) => l.status !== "new").length;
-      return `Follow up — you have ${n} lead${n === 1 ? "" : "s"} waiting.`;
+      return `You have ${n} lead${n === 1 ? "" : "s"} out — follow up.`;
     },
-    reasoning: "Most replies come from a second or third touch, not the first message.",
+    reasoning:
+      "Most replies don't come from the first message. Omnio will draft your follow-up so you don't have to guess what to say.",
     actionLabel: "Follow Up",
     isComplete: (a) => hasMilestone(a, "first_call_booked"),
     autoAdvance: false,
@@ -155,9 +168,10 @@ export const STAGES: Stage[] = [
   {
     key: "prep_call",
     route: "/leads",
-    sentence: "Prep for your call.",
-    reasoning: "A booked call is real demand — let's make sure you close it.",
-    actionLabel: "Prep For Call",
+    sentence: "You have a call booked — let's prepare.",
+    reasoning:
+      "A booked call is real demand. Omnio will give you the exact questions to ask and objections to expect.",
+    actionLabel: "Prep For My Call",
     isComplete: (a) => a.clients.length > 0,
     autoAdvance: false,
   },
