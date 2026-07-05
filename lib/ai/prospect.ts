@@ -9,13 +9,13 @@ export type ProspectStrategy = {
 
 export type ProspectCandidate = {
   name: string;
-  verdict: "good" | "check" | "skip";
-  reason: string;
+  verdict: "keep" | "check" | "skip";
+  coaching: string; // 2-4 sentences: what they spotted, what they missed, how to think about this business
 };
 
 export type ProspectEvaluation = {
   candidates: ProspectCandidate[];
-  summary: string; // one sentence overall — encouragement or course-correction
+  summary: string; // the pattern across all their picks — what mental model they're developing
 };
 
 // ─── Strategy prompt ────────────────────────────────────────────────────────
@@ -61,18 +61,29 @@ export function buildEvalPrompt(
   service: string,
   strategy: ProspectStrategy
 ): string {
-  return `You are Omnio, an experienced AI agency owner reviewing prospect picks made by a first-time founder targeting "${niche}" with offer: "${service}".
+  return `You are Omnio — an experienced AI agency owner coaching a first-time founder who is targeting "${niche}" with offer: "${service}".
 
-The qualified-prospect criteria for this niche:
-✅ Look for: ${strategy.lookFor.map((s) => `\n- ${s}`).join("")}
-❌ Skip: ${strategy.skip.map((s) => `\n- ${s}`).join("")}
+Your role here is mentor, not judge. The founder has found their first few candidate businesses. Your job is to coach their thinking so that by prospect 25, they no longer need you to tell them which businesses are good. They should have internalized the pattern themselves.
 
-The founder has pasted their first few candidate businesses. Review each one honestly:
-- "good": strong fit, worth reaching out to
-- "check": might be okay but has at least one concern worth noting
-- "skip": clear disqualifier
+A qualified prospect passes all four tests:
+1. The pain is expensive — they're actively losing money or customers to the problem your offer solves
+2. The owner feels it — they already know something is wrong; you're not educating them that a problem exists
+3. The offer solves it — "${service}" specifically addresses what they're losing
+4. They can actually buy — owner-operated, established, decision-maker on the call
 
-Be direct. One sentence per prospect. The summary should either reinforce their instincts or gently correct their filter — not both.
+The niche-specific signals for "${niche}":
+✅ Look for:${strategy.lookFor.map((s) => `\n- ${s}`).join("")}
+❌ Skip:${strategy.skip.map((s) => `\n- ${s}`).join("")}
+
+For each candidate, write 2–4 sentences of coaching:
+- Acknowledge what their description reveals they spotted (reference what they wrote)
+- Point out what an experienced owner would also notice that they didn't mention
+- Explain how to think about this business using the four-test framework above
+- Give a clear verdict: keep, check (worth a look but verify one thing first), or skip
+
+Do NOT be formulaic. Don't write "You noticed X. You missed Y. Therefore Z." every time. Write like a mentor who has seen a hundred of these businesses and is genuinely helping someone develop their instincts.
+
+The summary should name the pattern across all their picks — what mental model they're building, and whether it's calibrated correctly. Not a score. A diagnosis.
 
 Candidates they found:
 ${candidates}
@@ -82,9 +93,13 @@ ${candidates}
 Respond with ONLY a JSON object in exactly this shape, nothing else:
 {
   "candidates": [
-    { "name": "business name as they wrote it", "verdict": "good | check | skip", "reason": "one direct sentence — why" }
+    {
+      "name": "business name as they wrote it",
+      "verdict": "keep | check | skip",
+      "coaching": "2-4 sentences of genuine coaching — reference what they noticed, what they missed, how an experienced owner thinks about this specific business"
+    }
   ],
-  "summary": "one sentence — overall verdict on their ICP instincts, e.g. 'You're picking the right kind of business — go find the other 20.' or 'Your list has a pattern: you're drawn to bigger companies than this offer is built for. Let's recalibrate.'"
+  "summary": "2-3 sentences naming the pattern across their picks — what instinct they're developing and whether it's on track. End with a concrete next step or encouragement."
 }`;
 }
 
@@ -117,7 +132,7 @@ const STRATEGY_TOOL: Anthropic.Tool = {
 
 const EVAL_TOOL: Anthropic.Tool = {
   name: "evaluate_prospects",
-  description: "Call this with verdicts for each candidate and an overall summary.",
+  description: "Call this with coaching feedback for each candidate and a pattern summary.",
   input_schema: {
     type: "object",
     properties: {
@@ -127,13 +142,21 @@ const EVAL_TOOL: Anthropic.Tool = {
           type: "object",
           properties: {
             name: { type: "string" },
-            verdict: { type: "string", enum: ["good", "check", "skip"] },
-            reason: { type: "string" },
+            verdict: { type: "string", enum: ["keep", "check", "skip"] },
+            coaching: {
+              type: "string",
+              description:
+                "2-4 sentences coaching the founder's thinking: what they spotted, what they missed, how to think about this business.",
+            },
           },
-          required: ["name", "verdict", "reason"],
+          required: ["name", "verdict", "coaching"],
         },
       },
-      summary: { type: "string" },
+      summary: {
+        type: "string",
+        description:
+          "2-3 sentences naming the pattern across all their picks and whether their instincts are calibrated correctly.",
+      },
     },
     required: ["candidates", "summary"],
   },
@@ -160,19 +183,20 @@ function mockStrategy(niche: string): ProspectStrategy {
 
 function mockEvaluation(candidatesRaw: string): ProspectEvaluation {
   const lines = candidatesRaw.split("\n").filter((l) => l.trim());
+  const verdicts: ProspectCandidate["verdict"][] = ["keep", "check", "skip"];
+  const coachingExamples = [
+    "You correctly noticed they're active — that matters. What your description doesn't mention is whether the phone number goes straight to the owner or to a menu. Call it yourself before you reach out. A business that answers calls directly is the whole game here; one that already has a phone system built out is a much harder sell. Based on what you've shared, I'd keep this one — just verify the phone.",
+    "Your instinct to flag the reviews is right. 40 reviews for a home service company is the sweet spot: established enough to have budget, not so big they have a whole admin team handling inbound. The thing to look for next is whether those reviews mention responsiveness — 'called back immediately' or 'hard to reach' tells you exactly how much this pain costs them. Keep this one.",
+    "The franchise flag is the right call, and it's worth understanding why so you can spot it faster next time. The issue isn't size — it's authority. A franchise owner can like your pitch and still not be able to sign a vendor agreement without corporate approval, which means your deal dies in a committee you'll never meet. Skip this one. The tell is usually a corporate website URL or a disclaimer in the footer.",
+  ];
   return {
     candidates: lines.slice(0, 5).map((line, i) => ({
       name: line.trim(),
-      verdict: i % 3 === 2 ? "skip" : i % 3 === 1 ? "check" : "good",
-      reason:
-        i % 3 === 2
-          ? "Franchise location — the owner can't approve a new vendor without corporate."
-          : i % 3 === 1
-            ? "Looks established but their Google listing shows a dedicated front desk — confirm before outreach."
-            : "Owner-operated, phone-reliant, established reviews. Strong fit.",
+      verdict: verdicts[i % 3],
+      coaching: coachingExamples[i % 3],
     })),
     summary:
-      "You're finding the right shape of business. Go build out the rest of your 25.",
+      "You're developing the right instincts — you're looking at signals like reviews, phone presence, and business type, which is exactly the right layer. The one thing to sharpen: make sure every business you flag actually passes the 'owner feels the pain' test. You want businesses where a missed call is genuinely lost revenue, not just an inconvenience. Go build the rest of your 25 with that filter in mind.",
   };
 }
 

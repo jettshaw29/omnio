@@ -14,30 +14,35 @@ import {
 } from "./actions";
 import type { ProspectStrategy, ProspectEvaluation, ProspectCandidate } from "@/lib/ai/prospect";
 
-const VERDICT_STYLES: Record<ProspectCandidate["verdict"], { icon: string; color: string }> = {
-  good: { icon: "✅", color: "text-pine" },
-  check: { icon: "⚠️", color: "text-amber-700" },
-  skip: { icon: "❌", color: "text-clay" },
+const VERDICT_STYLES: Record<ProspectCandidate["verdict"], { icon: string; label: string; labelColor: string }> = {
+  keep: { icon: "✅", label: "Keep", labelColor: "text-pine" },
+  check: { icon: "⚠️", label: "Check first", labelColor: "text-amber-700" },
+  skip: { icon: "❌", label: "Skip", labelColor: "text-clay" },
 };
 
 function EvaluationResult({ evaluation }: { evaluation: ProspectEvaluation }) {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
         {evaluation.candidates.map((c, i) => {
           const style = VERDICT_STYLES[c.verdict];
           return (
-            <div key={i} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
-              <span className="text-lg mt-0.5">{style.icon}</span>
-              <div className="flex flex-col">
-                <span className="text-body font-medium text-text-primary">{c.name}</span>
-                <span className={`text-body ${style.color}`}>{c.reason}</span>
+            <div key={i} className="flex flex-col gap-2 pb-4 border-b border-border last:border-0 last:pb-0">
+              <div className="flex items-center gap-2">
+                <span>{style.icon}</span>
+                <span className="text-body font-semibold text-text-primary">{c.name}</span>
+                <span className={`text-small font-medium ${style.labelColor} ml-auto`}>
+                  {style.label}
+                </span>
               </div>
+              <p className="text-body text-text-secondary leading-relaxed">{c.coaching}</p>
             </div>
           );
         })}
       </div>
-      <p className="text-body-lg text-text-primary font-medium">{evaluation.summary}</p>
+      <div className="bg-surface border border-border rounded-md p-4">
+        <p className="text-body text-text-primary leading-relaxed">{evaluation.summary}</p>
+      </div>
     </div>
   );
 }
