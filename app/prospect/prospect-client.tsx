@@ -6,22 +6,38 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { JourneyHeader } from "@/components/journey-header";
 import { DevAiStep } from "@/components/dev-ai-step";
-import { saveProspectStrategy } from "./actions";
-import type { ProspectStrategy } from "@/lib/ai/prospect";
+import {
+  saveProspectStrategy,
+  evaluateProspectsAction,
+  getEvalDevPrompt,
+  markProspectEvaluated,
+} from "./actions";
+import type { ProspectStrategy, ProspectEvaluation, ProspectCandidate } from "@/lib/ai/prospect";
 
-function Section({ title, items }: { title: string; items: string[] }) {
+const VERDICT_STYLES: Record<ProspectCandidate["verdict"], { icon: string; color: string }> = {
+  good: { icon: "✅", color: "text-pine" },
+  check: { icon: "⚠️", color: "text-amber-700" },
+  skip: { icon: "❌", color: "text-clay" },
+};
+
+function EvaluationResult({ evaluation }: { evaluation: ProspectEvaluation }) {
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-small font-medium text-text-primary uppercase tracking-wide">
-        {title}
-      </span>
-      <ul className="flex flex-col gap-1">
-        {items.map((item, i) => (
-          <li key={i} className="text-body text-text-secondary">
-            • {item}
-          </li>
-        ))}
-      </ul>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        {evaluation.candidates.map((c, i) => {
+          const style = VERDICT_STYLES[c.verdict];
+          return (
+            <div key={i} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+              <span className="text-lg mt-0.5">{style.icon}</span>
+              <div className="flex flex-col">
+                <span className="text-body font-medium text-text-primary">{c.name}</span>
+                <span className={`text-body ${style.color}`}>{c.reason}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-body-lg text-text-primary font-medium">{evaluation.summary}</p>
     </div>
   );
 }
@@ -32,29 +48,62 @@ export function ProspectClient({
   niche,
   initialStrategy,
   devPrompt,
+  devMode,
 }: {
   agencyId: string;
   brandName: string | null;
   niche: string;
   initialStrategy: ProspectStrategy | null;
   devPrompt: string | null;
+  devMode: boolean;
 }) {
   const router = useRouter();
   const [strategy, setStrategy] = useState<ProspectStrategy | null>(initialStrategy);
-  const [isSaving, setIsSaving] = useState(false);
+  const [candidates, setCandidates] = useState("");
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluation, setEvaluation] = useState<ProspectEvaluation | null>(null);
+  const [evalDevPrompt, setEvalDevPrompt] = useState<string | null>(null);
+  const [isAdvancing, setIsAdvancing] = useState(false);
 
-  async function handleDevResult(parsed: unknown) {
+  async function handleDevStrategyResult(parsed: unknown) {
     const s = parsed as ProspectStrategy;
     await saveProspectStrategy(agencyId, s);
     setStrategy(s);
-    router.refresh();
+  }
+
+  async function handleEvaluate() {
+    if (!candidates.trim()) return;
+    setIsEvaluating(true);
+    if (devMode) {
+      const prompt = await getEvalDevPrompt(agencyId, candidates);
+      setEvalDevPrompt(prompt);
+      setIsEvaluating(false);
+      return;
+    }
+    const result = await evaluateProspectsAction(
+      agencyId,
+      candidates,
+      niche,
+      "",
+      strategy!
+    );
+    setEvaluation(result);
+    setIsEvaluating(false);
+  }
+
+  async function handleDevEvalResult(parsed: unknown) {
+    const result = parsed as ProspectEvaluation;
+    await markProspectEvaluated(agencyId);
+    setEvaluation(result);
+    setEvalDevPrompt(null);
   }
 
   async function handleStartOutreach() {
-    setIsSaving(true);
+    setIsAdvancing(true);
     router.push("/leads");
   }
 
+  // Phase 0: strategy not yet generated (dev mode waiting for paste)
   if (!strategy) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -63,13 +112,13 @@ export function ProspectClient({
           {devPrompt ? (
             <DevAiStep
               touchpoint="prospect"
-              title="Find your first 25 prospects"
+              title="What makes a qualified prospect"
               prompt={devPrompt}
-              onResult={handleDevResult}
+              onResult={handleDevStrategyResult}
             />
           ) : (
             <p className="text-body-lg text-text-secondary">
-              Building your prospect strategy...
+              Building your prospect criteria...
             </p>
           )}
         </main>
@@ -82,34 +131,104 @@ export function ProspectClient({
       <JourneyHeader brandName={brandName} />
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <Card className="max-w-[640px] w-full p-8 flex flex-col gap-8">
+
+          {/* Header */}
           <div className="flex flex-col gap-2">
             <h1 className="text-h1 font-semibold text-text-primary">
-              Find your first 25 prospects.
+              Build a list of 25 qualified prospects.
             </h1>
             <p className="text-body-lg text-text-secondary">
-              Here&apos;s exactly where to look and what to look for in{" "}
-              <span className="text-text-primary font-medium">{niche}</span>.
+              Not every business in your niche is worth contacting. Here&apos;s what separates
+              a good prospect from a wasted message, for{" "}
+              <span className="font-medium text-text-primary">{niche}</span>.
             </p>
           </div>
 
-          <div className="flex flex-col gap-6">
-            <Section title="Where to look" items={strategy.whereToLook} />
+          {/* ICP Criteria */}
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <span className="text-small font-medium text-text-primary flex items-center gap-2">
+                <span>✅</span> Look for
+              </span>
+              <ul className="flex flex-col gap-1.5">
+                {strategy.lookFor.map((item, i) => (
+                  <li key={i} className="text-body text-text-secondary">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <div className="border-t border-border" />
-            <Section title="What to search" items={strategy.whatToSearch} />
-            <div className="border-t border-border" />
-            <Section title="Good signs" items={strategy.qualifyingSignals} />
-            <div className="border-t border-border" />
-            <Section title="Skip these" items={strategy.redFlags} />
+
+            <div className="flex flex-col gap-2">
+              <span className="text-small font-medium text-text-primary flex items-center gap-2">
+                <span>❌</span> Skip these
+              </span>
+              <ul className="flex flex-col gap-1.5">
+                {strategy.skip.map((item, i) => (
+                  <li key={i} className="text-body text-text-secondary">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <p className="text-small text-text-tertiary">
-              Build a list of 25 names, businesses, and phone numbers or email addresses.
-              When you&apos;re ready, Omnio will write your first message.
-            </p>
-            <Button variant="primary" onClick={handleStartOutreach} disabled={isSaving}>
-              {isSaving ? "Let's go..." : "I have my list — start outreach"}
-            </Button>
+          {/* Confidence check */}
+          <div className="border-t border-border pt-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-body font-semibold text-text-primary">
+                Before you build the full list — test your instincts.
+              </span>
+              <p className="text-body text-text-secondary">
+                Find 3–5 businesses you think are a good fit. Paste their names below and
+                what you noticed about them. Omnio will tell you if you&apos;re on track.
+              </p>
+            </div>
+
+            {!evaluation && !evalDevPrompt && (
+              <>
+                <textarea
+                  rows={5}
+                  value={candidates}
+                  onChange={(e) => setCandidates(e.target.value)}
+                  placeholder={
+                    "e.g.\nMike's Plumbing – active website, 40 Google reviews, no menu when you call\nGarcia HVAC – owner-operated, ran a Facebook ad last week\nHomeServe USA – seems big, might be a franchise"
+                  }
+                  className="text-body text-text-primary bg-surface border border-border rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-pine resize-none placeholder:text-text-tertiary"
+                />
+                <Button
+                  variant="primary"
+                  onClick={handleEvaluate}
+                  disabled={isEvaluating || !candidates.trim()}
+                >
+                  {isEvaluating ? "Omnio is reviewing..." : "Are these good prospects?"}
+                </Button>
+              </>
+            )}
+
+            {evalDevPrompt && (
+              <DevAiStep
+                touchpoint="prospectEval"
+                title="Prospect review"
+                prompt={evalDevPrompt}
+                onResult={handleDevEvalResult}
+              />
+            )}
+
+            {evaluation && (
+              <>
+                <EvaluationResult evaluation={evaluation} />
+                <Button
+                  variant="primary"
+                  onClick={handleStartOutreach}
+                  disabled={isAdvancing}
+                >
+                  {isAdvancing ? "Let's go..." : "I have my list — start outreach"}
+                </Button>
+              </>
+            )}
           </div>
         </Card>
       </main>

@@ -135,11 +135,11 @@ export const STAGES: Stage[] = [
   {
     key: "prospect",
     route: "/prospect",
-    sentence: "Find your first 25 prospects.",
+    sentence: "Build a list of 25 qualified prospects.",
     reasoning:
-      "Before you write a single message, you need a list. Omnio will show you exactly where to look and what to look for in your specific niche.",
+      "Not all businesses are worth contacting. Omnio will teach you exactly what a qualified prospect looks like for your niche — then review your first few picks before you build the full list.",
     actionLabel: "Build My List",
-    isComplete: (a) => !!a.prospectStrategyJson,
+    isComplete: (a) => !!a.prospectEvaluatedAt,
     autoAdvance: false,
   },
   {

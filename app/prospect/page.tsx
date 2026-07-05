@@ -15,8 +15,14 @@ export default async function ProspectPage() {
 
   let strategy: ProspectStrategy | null = null;
   if (agency.prospectStrategyJson) {
-    strategy = JSON.parse(agency.prospectStrategyJson);
-  } else if (!devMode) {
+    const parsed = JSON.parse(agency.prospectStrategyJson);
+    // Guard against old format (whereToLook/whatToSearch) — regenerate if shape changed.
+    if (Array.isArray(parsed.lookFor)) {
+      strategy = parsed as ProspectStrategy;
+    }
+  }
+
+  if (!strategy && !devMode) {
     strategy = await buildProspectStrategy(
       agency.niche!,
       agency.offerService!,
@@ -40,6 +46,7 @@ export default async function ProspectPage() {
       niche={agency.niche!}
       initialStrategy={strategy}
       devPrompt={devPrompt}
+      devMode={devMode}
     />
   );
 }

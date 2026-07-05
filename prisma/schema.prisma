@@ -34,6 +34,7 @@ model Agency {
   offerLockedAt        DateTime?
   brandLockedAt        DateTime?
   prospectStrategyJson String?
+  prospectEvaluatedAt  DateTime?
   createdAt            DateTime  @default(now())
 
   website       Website?

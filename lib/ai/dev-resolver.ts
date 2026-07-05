@@ -8,7 +8,7 @@ import { parseInterviewResponse } from "./interview";
 import { parseOfferResponse } from "./offer";
 import { parseBrandResponse } from "./brand";
 import { parseWebsiteResponse } from "./website";
-import { parseProspectResponse } from "./prospect";
+import { parseProspectResponse, parseEvalResponse } from "./prospect";
 import { parseOutreachResponse } from "./outreach";
 import { parseProposalResponse } from "./proposal";
 import { parseChecklistResponse, parseStatusUpdateResponse } from "./delivery";
@@ -20,6 +20,7 @@ export type DevTouchpoint =
   | "brand"
   | "website"
   | "prospect"
+  | "prospectEval"
   | "outreach"
   | "proposal"
   | "checklist"
@@ -41,6 +42,8 @@ export async function resolveDevResponse(
       return parseWebsiteResponse(raw);
     case "prospect":
       return parseProspectResponse(raw);
+    case "prospectEval":
+      return parseEvalResponse(raw);
     case "outreach":
       return parseOutreachResponse(raw);
     case "proposal":
