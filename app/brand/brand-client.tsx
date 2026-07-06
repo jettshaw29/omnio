@@ -86,7 +86,7 @@ export function BrandClient({
 
               <label className="flex flex-col gap-2">
                 <span className="text-small font-medium text-text-primary">
-                  Positioning statement
+                  What you do in one sentence
                 </span>
                 <textarea
                   rows={3}

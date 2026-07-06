@@ -159,6 +159,10 @@ export function WebsiteBuilderClient({
         </div>
       </header>
 
+      <p className="text-small text-text-secondary text-center border-b border-border py-3 px-8">
+        Click any section to edit it. Use Regenerate below each one if you want a different version.
+      </p>
+
       <main className="flex-1">
         <WebsiteTemplate
           mode="edit"

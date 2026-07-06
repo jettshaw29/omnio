@@ -100,5 +100,5 @@ export async function publishWebsite(websiteId: string, agencyId: string) {
     });
   });
 
-  redirect("/");
+  redirect("/celebrate/website_live");
 }

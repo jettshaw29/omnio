@@ -152,6 +152,9 @@ export function CloseClientForm({
           <span className="text-small font-medium text-text-primary">
             Contract checklist
           </span>
+          <p className="text-small text-text-secondary">
+            Cover all of these before your client pays — a simple Google Doc works fine.
+          </p>
           <ul className="flex flex-col gap-1">
             {CONTRACT_CHECKLIST.map((item) => (
               <li key={item} className="text-body text-text-secondary">

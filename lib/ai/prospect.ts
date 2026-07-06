@@ -25,7 +25,7 @@ const strategySystemPrompt = (niche: string, service: string) =>
 
 ${getPlaybook()}
 
-Your job is to explain — very specifically, for this exact niche — what makes a business a qualified prospect vs one to skip. This is about teaching them to think like an agency owner, not giving them a generic checklist. Reference §2 (Identifying Ideal Clients) and §10 (Outreach) of the Playbook.
+Your job is to explain — very specifically, for this exact niche — what makes a business a qualified prospect vs one to skip. This is about teaching them to think like an agency owner, not giving them a generic checklist. Reference §2 (Qualifying a Prospect) of the Playbook, especially the four tests, the expensive-pain vs. felt-pain distinction, and the observable signals table.
 
 Be concrete. Not "look for established businesses" — say what establishment actually looks like for this niche. Not "skip bad fits" — say the observable signals that make a specific business in this niche a waste of time.`;
 

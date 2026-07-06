@@ -81,7 +81,13 @@ export function LeadsClient({
       <JourneyHeader brandName={brandName} />
       <main className="flex-1 flex flex-col items-center px-6 py-16">
       <div className="max-w-[960px] w-full flex flex-col gap-8">
-        <h1 className="text-h1 font-semibold text-text-primary">Your leads</h1>
+        <div className="flex flex-col gap-2">
+          <h1 className="text-h1 font-semibold text-text-primary">Your leads</h1>
+          <p className="text-body text-text-secondary">
+            Search Google Maps or Yelp for your niche in your city — those are real businesses.
+            Start with 5, check each one against your prospect criteria, add the ones that qualify.
+          </p>
+        </div>
 
         <Card className="p-6 flex items-end gap-4">
           <label className="flex flex-col gap-2 flex-1">
@@ -113,8 +119,8 @@ export function LeadsClient({
 
         {leads.length === 0 ? (
           <p className="text-body-lg text-text-secondary">
-            No leads yet — once you&apos;re live, this is where you&apos;ll track everyone
-            you reach out to.
+            No leads yet. Add your first one above — start with the businesses from your
+            prospect list.
           </p>
         ) : (
           <div className="flex flex-col gap-4">
@@ -144,7 +150,7 @@ export function LeadsClient({
                     >
                       {draftingId === lead.id ? "Thinking..." : "Draft Outreach"}
                     </Button>
-                    {lead.status !== "closed" && (
+                    {lead.status === "call_booked" && (
                       <Button variant="text" href={`/close/${lead.id}`}>
                         Close Client
                       </Button>
@@ -180,11 +186,24 @@ export function LeadsClient({
                     >
                       {copiedId === lead.id ? "Copied ✓" : "Copy"}
                     </Button>
+                    <p className="text-small text-text-secondary">
+                      Find their email in their website footer, or message their Facebook or
+                      Instagram business page. Once sent, mark them as Contacted using the
+                      status dropdown above.
+                    </p>
                   </div>
                 )}
               </Card>
             ))}
           </div>
+        )}
+
+        {leads.length > 0 && (
+          <p className="text-small text-text-secondary">
+            When someone agrees to a call, change their status to{" "}
+            <span className="font-medium text-text-primary">Call Booked</span> — that
+            unlocks your call prep and moves Mission Control forward.
+          </p>
         )}
       </div>
       </main>

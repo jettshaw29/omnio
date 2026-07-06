@@ -182,13 +182,18 @@ export function ProspectClient({
 
           {/* Confidence check */}
           <div className="border-t border-border pt-6 flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <span className="text-body font-semibold text-text-primary">
                 Before you build the full list — test your instincts.
               </span>
               <p className="text-body text-text-secondary">
                 Find 3–5 businesses you think are a good fit. Paste their names below and
                 what you noticed about them. Omnio will tell you if you&apos;re on track.
+              </p>
+              <p className="text-small text-text-secondary">
+                Search Google Maps or Yelp for{" "}
+                <span className="font-medium text-text-primary">{niche}</span> in your area
+                to find real businesses to test your instincts on.
               </p>
             </div>
 
@@ -225,13 +230,20 @@ export function ProspectClient({
             {evaluation && (
               <>
                 <EvaluationResult evaluation={evaluation} />
-                <Button
-                  variant="primary"
-                  onClick={handleStartOutreach}
-                  disabled={isAdvancing}
-                >
-                  {isAdvancing ? "Let's go..." : "I have my list — start outreach"}
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <p className="text-small text-text-secondary">
+                    You know what to look for now. Find 20–25 more businesses that fit these
+                    criteria, then add them in the next step and start reaching out.
+                  </p>
+                  <Button
+                    variant="primary"
+                    onClick={handleStartOutreach}
+                    disabled={isAdvancing}
+                    className="self-start"
+                  >
+                    {isAdvancing ? "Let's go..." : "Start building my list"}
+                  </Button>
+                </div>
               </>
             )}
           </div>

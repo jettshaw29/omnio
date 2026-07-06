@@ -99,6 +99,9 @@ export function OfferClient({
                     className="text-body-lg text-text-primary bg-surface border border-border rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-pine w-full"
                   />
                 </div>
+                <span className="text-small text-text-secondary">
+                  At this price, one signed client is your first $1,000.
+                </span>
               </label>
             </div>
 

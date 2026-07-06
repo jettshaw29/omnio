@@ -101,13 +101,8 @@ export function InterviewClient({
               visible ? "opacity-100" : "opacity-0"
             }`}
           >
-            {phase === "acknowledging" && (
-              <p className="text-body text-text-secondary">Got it — that&apos;s helpful.</p>
-            )}
-            {phase === "thinking" && (
-              <p className="text-body text-text-secondary">
-                Thinking about what to ask next...
-              </p>
+            {(phase === "acknowledging" || phase === "thinking") && (
+              <p className="text-body text-text-secondary">One more question...</p>
             )}
 
             {phase === "asking" && step?.kind === "question" && (
@@ -129,14 +124,17 @@ export function InterviewClient({
                   placeholder="Type your answer..."
                   className="text-body-lg text-text-primary bg-surface border border-border rounded-md p-4 focus:outline-none focus:ring-2 focus:ring-pine resize-none"
                 />
-                <Button
-                  variant="primary"
-                  onClick={submitAnswer}
-                  disabled={!answer.trim()}
-                  className="self-start"
-                >
-                  Continue
-                </Button>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="primary"
+                    onClick={submitAnswer}
+                    disabled={!answer.trim()}
+                    className="self-start"
+                  >
+                    Continue
+                  </Button>
+                  <span className="text-small text-text-tertiary">or press Enter</span>
+                </div>
               </>
             )}
 

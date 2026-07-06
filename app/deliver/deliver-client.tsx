@@ -141,6 +141,9 @@ export function DeliverClient({
           </div>
 
           <div>
+            <p className="text-small text-text-secondary mb-2">
+              Keep your client informed — send them an update at least once a week.
+            </p>
             <Button
               variant="text"
               onClick={handleDraftStatus}
@@ -215,8 +218,12 @@ export function DeliverClient({
                   disabled={isMarkingRequested}
                   className="self-start"
                 >
-                  {isMarkingRequested ? "Saving..." : "Mark as Requested"}
+                  {isMarkingRequested ? "Saving..." : "I've asked — mark as requested"}
                 </Button>
+                <p className="text-small text-text-secondary">
+                  This doesn&apos;t send anything automatically — just check it once you&apos;ve
+                  reached out to your client directly.
+                </p>
               </>
             )}
           </Card>

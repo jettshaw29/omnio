@@ -21,6 +21,16 @@ export default async function CelebratePage({
   const queue = queueParam ? queueParam.split(",") : [];
   const user = await requireUser();
 
+  if (key === "website_live") {
+    return (
+      <CelebrationScreen
+        headline="You're live. Anyone can find you now."
+        subline="You just became a business that exists in the world."
+        nextHref={nextHrefFor(queue)}
+      />
+    );
+  }
+
   if (key === "first_client") {
     return (
       <CelebrationScreen
