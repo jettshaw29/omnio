@@ -133,6 +133,8 @@ export async function getNextInterviewStep(
   }
 
   const client = new Anthropic();
+  const mapped = history.map((m) => ({ role: m.role, content: m.content }));
+  const messages = mapped.length > 0 ? mapped : [{ role: "user" as const, content: "Let's begin." }];
   const response = await client.messages.create({
     model: "claude-sonnet-5",
     max_tokens: 512,
@@ -140,7 +142,7 @@ export async function getNextInterviewStep(
       { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
     ],
     tools: [NICHE_TOOL],
-    messages: history.map((m) => ({ role: m.role, content: m.content })),
+    messages,
   });
 
   const toolUse = response.content.find((b) => b.type === "tool_use");
