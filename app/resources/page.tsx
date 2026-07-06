@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { JourneyHeader } from "@/components/journey-header";
