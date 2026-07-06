@@ -21,6 +21,7 @@ function isChecklistComplete(checklistJson: string | null) {
 export default async function DeliverPage() {
   const user = await requireUser();
   const agency = await getCurrentAgency(user.id, user.email);
+  console.log("[deliver] userId:", user.id, "clients:", agency.clients.length, "milestones:", agency.milestones.map(m => m.key));
   requireStageAccess(agency, "deliver");
 
   const client =
@@ -29,6 +30,7 @@ export default async function DeliverPage() {
     ) ?? agency.clients[0];
 
   if (!client) {
+    console.log("[deliver] no client found, redirecting");
     redirect("/");
   }
 
