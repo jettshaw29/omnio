@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { JourneyHeader } from "@/components/journey-header";
 import { DevAiStep } from "@/components/dev-ai-step";
+import Link from "next/link";
 import {
   draftStatusUpdateForClient,
   draftTestimonialAskForClient,
@@ -116,9 +117,14 @@ export function DeliverClient({
       <main className="flex-1 flex items-center justify-center px-6 py-16">
       <div className="max-w-[640px] w-full flex flex-col gap-6">
         <Card className="p-8 flex flex-col gap-6">
-          <h1 className="text-h1 font-semibold text-text-primary">
-            Deliver {leadName.split(" ")[0]}&apos;s project.
-          </h1>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-h1 font-semibold text-text-primary">
+              Deliver {leadName.split(" ")[0]}&apos;s project.
+            </h1>
+            <Link href="/resources" className="text-small text-pine hover:underline">
+              Not sure how to build it? Here&apos;s how →
+            </Link>
+          </div>
 
           <div className="flex flex-col gap-3">
             {items.map((item, i) => (
