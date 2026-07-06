@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { JourneyHeader } from "@/components/journey-header";
@@ -40,6 +41,7 @@ export function LeadsClient({
   ctx: OutreachContext;
   devMode: boolean;
 }) {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [business, setBusiness] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -58,6 +60,7 @@ export function LeadsClient({
     setName("");
     setBusiness("");
     setIsAdding(false);
+    router.refresh();
   }
 
   async function handleDraft(leadId: string) {
@@ -151,7 +154,7 @@ export function LeadsClient({
                   <div className="flex items-center gap-3">
                     <select
                       value={lead.status}
-                      onChange={(e) => updateLeadStatus(lead.id, e.target.value)}
+                      onChange={async (e) => { await updateLeadStatus(lead.id, e.target.value); router.refresh(); }}
                       className="text-body text-text-primary bg-surface border border-border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-pine"
                     >
                       {STATUS_OPTIONS.map((opt) => (
