@@ -24,3 +24,17 @@ export async function requireUser(): Promise<SessionUser> {
 
   return { id: user.id, email: user.email };
 }
+
+export async function getOptionalUser(): Promise<SessionUser | null> {
+  if (isAiDevMode()) {
+    return { id: DEV_USER.id, email: DEV_USER.email };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !user.email) return null;
+  return { id: user.id, email: user.email };
+}
