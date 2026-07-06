@@ -42,7 +42,7 @@ export function LoginForm() {
     const result = await sendMagicLink(email.trim());
     setIsSending(false);
     if (result.error) {
-      setError("We couldn't send that. Let's try again.");
+      setError(result.error);
       return;
     }
     setSent(true);
