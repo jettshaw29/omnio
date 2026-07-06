@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { draftOutreach, buildOutreachPrompt, type OutreachContext } from "@/lib/ai/outreach";
+import { draftOutreach, draftFollowUp, buildOutreachPrompt, type OutreachContext } from "@/lib/ai/outreach";
 
 export async function addLead(agencyId: string, name: string, business: string) {
   await prisma.lead.create({ data: { agencyId, name, business } });
@@ -43,4 +43,9 @@ export async function draftOutreachForLead(leadId: string, ctx: OutreachContext)
 export async function getOutreachDevPrompt(leadId: string, ctx: OutreachContext) {
   const lead = await prisma.lead.findUniqueOrThrow({ where: { id: leadId } });
   return buildOutreachPrompt(lead.name, lead.business, ctx);
+}
+
+export async function draftFollowUpForLead(leadId: string, ctx: OutreachContext) {
+  const lead = await prisma.lead.findUniqueOrThrow({ where: { id: leadId } });
+  return draftFollowUp(lead.name, lead.business, ctx);
 }

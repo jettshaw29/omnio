@@ -8,6 +8,7 @@ import { DevAiStep } from "@/components/dev-ai-step";
 import {
   addLead,
   draftOutreachForLead,
+  draftFollowUpForLead,
   getOutreachDevPrompt,
   updateLeadStatus,
 } from "./actions";
@@ -43,9 +44,12 @@ export function LeadsClient({
   const [business, setBusiness] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [followUpDrafts, setFollowUpDrafts] = useState<Record<string, string>>({});
   const [devPrompts, setDevPrompts] = useState<Record<string, string>>({});
   const [draftingId, setDraftingId] = useState<string | null>(null);
+  const [draftingFollowUpId, setDraftingFollowUpId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedFollowUpId, setCopiedFollowUpId] = useState<string | null>(null);
 
   async function handleAdd() {
     if (!name.trim() || !business.trim()) return;
@@ -74,6 +78,19 @@ export function LeadsClient({
     await navigator.clipboard.writeText(drafts[leadId]);
     setCopiedId(leadId);
     setTimeout(() => setCopiedId(null), 1500);
+  }
+
+  async function handleDraftFollowUp(leadId: string) {
+    setDraftingFollowUpId(leadId);
+    const message = await draftFollowUpForLead(leadId, ctx);
+    setFollowUpDrafts((prev) => ({ ...prev, [leadId]: message }));
+    setDraftingFollowUpId(null);
+  }
+
+  async function handleCopyFollowUp(leadId: string) {
+    await navigator.clipboard.writeText(followUpDrafts[leadId]);
+    setCopiedFollowUpId(leadId);
+    setTimeout(() => setCopiedFollowUpId(null), 1500);
   }
 
   return (
@@ -143,13 +160,23 @@ export function LeadsClient({
                         </option>
                       ))}
                     </select>
-                    <Button
-                      variant="text"
-                      onClick={() => handleDraft(lead.id)}
-                      disabled={draftingId === lead.id}
-                    >
-                      {draftingId === lead.id ? "Thinking..." : "Draft Outreach"}
-                    </Button>
+                    {lead.status === "contacted" ? (
+                      <Button
+                        variant="text"
+                        onClick={() => handleDraftFollowUp(lead.id)}
+                        disabled={draftingFollowUpId === lead.id}
+                      >
+                        {draftingFollowUpId === lead.id ? "Thinking..." : "Draft Follow-up"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="text"
+                        onClick={() => handleDraft(lead.id)}
+                        disabled={draftingId === lead.id}
+                      >
+                        {draftingId === lead.id ? "Thinking..." : "Draft Outreach"}
+                      </Button>
+                    )}
                     {lead.status === "call_booked" && (
                       <Button variant="text" href={`/close/${lead.id}`}>
                         Close Client
@@ -193,6 +220,26 @@ export function LeadsClient({
                     </p>
                   </div>
                 )}
+
+                {followUpDrafts[lead.id] && (
+                  <div className="flex flex-col gap-2 bg-background border border-border rounded-md p-4">
+                    <p className="text-small font-medium text-text-secondary">Follow-up</p>
+                    <p className="text-body text-text-primary whitespace-pre-wrap">
+                      {followUpDrafts[lead.id]}
+                    </p>
+                    <Button
+                      variant="text"
+                      onClick={() => handleCopyFollowUp(lead.id)}
+                      className="self-start"
+                    >
+                      {copiedFollowUpId === lead.id ? "Copied ✓" : "Copy"}
+                    </Button>
+                    <p className="text-small text-text-secondary">
+                      Send this 4–5 days after your first message. If you emailed, try their
+                      Instagram or Facebook page this time — different channel, same ask.
+                    </p>
+                  </div>
+                )}
               </Card>
             ))}
           </div>
@@ -205,8 +252,43 @@ export function LeadsClient({
             unlocks your call prep and moves Mission Control forward.
           </p>
         )}
+
+        {leads.some((l) => l.status === "contacted") && (
+          <div className="bg-surface border border-border rounded-md p-6 flex flex-col gap-4">
+            <h2 className="text-body font-semibold text-text-primary">
+              Nobody&apos;s replied yet — here&apos;s what to do.
+            </h2>
+            <div className="flex flex-col gap-3">
+              <SilenceTip
+                label="Follow up in 4–5 days."
+                body='Use "Draft Follow-up" on any contacted lead. Keep it short — 2 sentences and a yes/no question. Most deals close on the second or third touch, not the first.'
+              />
+              <SilenceTip
+                label="Switch channels."
+                body="If you emailed, try their Instagram or Facebook business page next. Different door, same message. Many small business owners check social more than email."
+              />
+              <SilenceTip
+                label="10+ contacted with no replies? Change your opener."
+                body="The first sentence is probably the problem. Try opening with something specific you noticed about their business instead of leading with your offer."
+              />
+              <SilenceTip
+                label="A 10–15% reply rate is normal."
+                body="If you reach 25 people and 3 reply, that's a healthy start. Silence isn't rejection — it's usually just noise. Keep adding leads and keep sending."
+              />
+            </div>
+          </div>
+        )}
       </div>
       </main>
+    </div>
+  );
+}
+
+function SilenceTip({ label, body }: { label: string; body: string }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-body font-medium text-text-primary">{label}</span>
+      <p className="text-body text-text-secondary">{body}</p>
     </div>
   );
 }

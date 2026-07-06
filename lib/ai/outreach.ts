@@ -65,6 +65,60 @@ Worth a quick 10-minute call to see if it's a fit?
 ${ctx.brandName}`;
 }
 
+const followUpSystemPrompt = (ctx: OutreachContext) => `You are Omnio, a calm and experienced agency owner helping a beginner follow up on cold outreach that got no reply.
+
+Draft a SHORT follow-up message — 2 to 3 sentences, no more. Rules:
+- Briefly acknowledge you reached out before, without apologising for it
+- Try a different angle or a simpler question than the first message
+- End with an easy yes/no question, not a big ask
+- Never use phrases like "I hope this finds you well" or "just checking in"
+
+Agency: "${ctx.brandName}". Niche: "${ctx.niche}". Offer: "${ctx.service}".`;
+
+const FOLLOW_UP_TOOL: Anthropic.Tool = {
+  name: "draft_follow_up",
+  description: "Call this once with the drafted follow-up message.",
+  input_schema: {
+    type: "object",
+    properties: {
+      message: { type: "string", description: "The short follow-up, 2-3 sentences max." },
+    },
+    required: ["message"],
+  },
+};
+
+function mockFollowUp(leadName: string, leadBusiness: string, ctx: OutreachContext): string {
+  return `Hi ${leadName.split(" ")[0]}, following up on my note from a few days ago — is there a better time to connect about what this could look like for ${leadBusiness}?
+
+${ctx.brandName}`;
+}
+
+export async function draftFollowUp(
+  leadName: string,
+  leadBusiness: string,
+  ctx: OutreachContext
+): Promise<string> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return mockFollowUp(leadName, leadBusiness, ctx);
+  }
+
+  const client = new Anthropic();
+  const response = await client.messages.create({
+    model: "claude-sonnet-5",
+    max_tokens: 256,
+    system: [{ type: "text", text: followUpSystemPrompt(ctx), cache_control: { type: "ephemeral" } }],
+    tools: [FOLLOW_UP_TOOL],
+    tool_choice: { type: "tool", name: "draft_follow_up" },
+    messages: [
+      { role: "user", content: `Draft follow-up for ${leadName} at ${leadBusiness}.` },
+    ],
+  });
+
+  const toolUse = response.content.find((b) => b.type === "tool_use");
+  const input = toolUse?.input as { message: string };
+  return input.message;
+}
+
 export async function draftOutreach(
   leadName: string,
   leadBusiness: string,
